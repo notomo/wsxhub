@@ -23,7 +23,7 @@ type Client struct {
 	ws         *websocket.Conn
 	server     *Server
 	done       chan bool
-	message    chan *Message
+	message    chan string
 	clientType ClientType
 }
 
@@ -31,12 +31,12 @@ type Client struct {
 func NewClient(ws *websocket.Conn, server *Server, clientType ClientType) *Client {
 	id := xid.New()
 	done := make(chan bool)
-	message := make(chan *Message)
+	message := make(chan string)
 	return &Client{id.String(), ws, server, done, message, clientType}
 }
 
 // Send is
-func (client *Client) Send(message *Message) {
+func (client *Client) Send(message string) {
 	select {
 	case client.message <- message:
 	default:
@@ -54,7 +54,7 @@ func (client *Client) listenSend() {
 	for {
 		select {
 		case message := <-client.message:
-			websocket.JSON.Send(client.ws, message)
+			websocket.Message.Send(client.ws, message)
 		case <-client.done:
 			client.server.Delete(client)
 			return
@@ -69,8 +69,8 @@ func (client *Client) listenReceive() {
 			client.server.Delete(client)
 			return
 		default:
-			var message *Message
-			err := websocket.JSON.Receive(client.ws, &message)
+			var message string
+			err := websocket.Message.Receive(client.ws, &message)
 			client.server.Receive(client, message)
 			if err == io.EOF {
 				client.done <- true
