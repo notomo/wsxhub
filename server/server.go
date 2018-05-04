@@ -1,32 +1,23 @@
 package server
 
 import (
-	"encoding/json"
-	"log"
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/websocket"
 )
 
-type requestClient struct {
-	client    *Client
-	RequestID string
-}
-
 // Server is
 type Server struct {
-	outsideClients       map[string]*Client
-	outsideJoined        chan *Client
-	outsideLeft          chan *Client
-	outsideMessage       chan string
-	insideClients        map[string]*Client
-	insideWaitingClients map[string]*Client
-	insideStartedWaiting chan *requestClient
-	insideEndedWaiting   chan *requestClient
-	insideJoined         chan *Client
-	insideLeft           chan *Client
-	insideMessage        chan string
-	done                 chan bool
+	outsideClients map[string]*Client
+	outsideJoined  chan *Client
+	outsideLeft    chan *Client
+	outsideMessage chan string
+	insideClients  map[string]*Client
+	insideJoined   chan *Client
+	insideLeft     chan *Client
+	insideMessage  chan string
+	done           chan bool
 }
 
 // NewServer is
@@ -36,9 +27,6 @@ func NewServer() *Server {
 	outsideLeft := make(chan *Client)
 	outsideMessage := make(chan string)
 	insideClients := make(map[string]*Client)
-	insideWaitingClients := make(map[string]*Client)
-	insideStartedWaiting := make(chan *requestClient)
-	insideEndedWaiting := make(chan *requestClient)
 	insideJoined := make(chan *Client)
 	insideLeft := make(chan *Client)
 	insideMessage := make(chan string)
@@ -49,9 +37,6 @@ func NewServer() *Server {
 		outsideLeft,
 		outsideMessage,
 		insideClients,
-		insideWaitingClients,
-		insideStartedWaiting,
-		insideEndedWaiting,
 		insideJoined,
 		insideLeft,
 		insideMessage,
@@ -83,11 +68,6 @@ func (server *Server) Delete(client *Client) {
 func (server *Server) Receive(client *Client, message string) {
 	switch client.clientType {
 	case INSIDE:
-		var decodedMessage requestMessage
-		if err := json.Unmarshal([]byte(message), &decodedMessage); err != nil {
-			panic(err)
-		}
-		server.insideStartedWaiting <- &requestClient{client, decodedMessage.RequestID}
 		server.insideMessage <- message
 	case OUTSIDE:
 		server.outsideMessage <- message
@@ -96,31 +76,23 @@ func (server *Server) Receive(client *Client, message string) {
 
 // SendOutside is
 func (server *Server) SendOutside(message string) {
+	if len(server.outsideClients) == 0 {
+		log.Info("Sent to outside but there is no clients: " + message)
+		server.SendInside(message)
+		return
+	}
 	for _, client := range server.outsideClients {
 		client.Send(message)
 	}
-}
-
-type requestMessage struct {
-	RequestID string `json:"requestId"`
+	log.Info("Sent to outside: " + message)
 }
 
 // SendInside is
 func (server *Server) SendInside(message string) {
-	var decodedMessage requestMessage
-	if err := json.Unmarshal([]byte(message), &decodedMessage); err != nil {
-		panic(err)
+	for _, client := range server.insideClients {
+		client.Send(message)
 	}
-	if decodedMessage.RequestID != "" {
-		if client, ok := server.insideWaitingClients[decodedMessage.RequestID]; ok {
-			client.Send(message)
-			server.insideEndedWaiting <- &requestClient{client, decodedMessage.RequestID}
-		}
-	} else {
-		for _, client := range server.insideClients {
-			client.Send(message)
-		}
-	}
+	log.Info("Sent to inside: " + message)
 }
 
 // Listen is
@@ -128,6 +100,7 @@ func (server *Server) Listen() {
 	onJoined := func(clientType ClientType) func(*websocket.Conn) {
 		return func(ws *websocket.Conn) {
 			client := NewClient(ws, server, clientType)
+			defer client.Close()
 			server.Add(client)
 			client.Listen()
 		}
@@ -140,6 +113,7 @@ func (server *Server) Listen() {
 	insideWsMux.Handle("/", websocket.Handler(onJoined(INSIDE)))
 
 	go func() {
+		log.Info("Start outside server")
 		err := http.ListenAndServe(":8001", outsideWsMux)
 		if err != nil {
 			log.Fatal(err)
@@ -147,6 +121,7 @@ func (server *Server) Listen() {
 	}()
 
 	go func() {
+		log.Info("Start inside server")
 		err := http.ListenAndServe(":8002", insideWsMux)
 		if err != nil {
 			log.Fatal(err)
@@ -157,30 +132,33 @@ func (server *Server) Listen() {
 		select {
 
 		case client := <-server.outsideJoined:
+			log.Info("Joined outside client: " + client.id)
 			server.outsideClients[client.id] = client
 
 		case client := <-server.insideJoined:
+			log.Info("Joined inside client: " + client.id)
 			server.insideClients[client.id] = client
 
-		case requestClient := <-server.insideStartedWaiting:
-			server.insideWaitingClients[requestClient.RequestID] = requestClient.client
-
-		case requestClient := <-server.insideEndedWaiting:
-			delete(server.insideWaitingClients, requestClient.RequestID)
-
 		case client := <-server.outsideLeft:
+			log.Info("Left outside client: " + client.id)
 			delete(server.outsideClients, client.id)
+			client.Close()
 
 		case client := <-server.insideLeft:
+			log.Info("Left inside client: " + client.id)
 			delete(server.insideClients, client.id)
+			client.Close()
 
 		case message := <-server.outsideMessage:
+			log.Info("Receive from outside: " + message)
 			server.SendInside(message)
 
 		case message := <-server.insideMessage:
+			log.Info("Receive from inside: " + message)
 			server.SendOutside(message)
 
 		case <-server.done:
+			log.Info("Done")
 			return
 		}
 	}

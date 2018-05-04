@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/rs/xid"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/websocket"
 )
 
@@ -24,6 +25,7 @@ func NewClient() *Client {
 	if err != nil {
 		panic(err)
 	}
+	log.Debug("Connect")
 	done := make(chan bool)
 	message := make(chan string)
 	return &Client{ws, done, message}
@@ -33,82 +35,105 @@ func NewClient() *Client {
 func (client *Client) Send() {
 	go client.listenSend()
 	client.readStdin()
+	<-client.done
 }
 
 func (client *Client) listenSend() {
-	for {
-		select {
-		case message := <-client.message:
-			var decodedMessage interface{}
-			if err := json.Unmarshal([]byte(message), &decodedMessage); err != nil {
+	select {
+	case message := <-client.message:
+		var decodedMessage interface{}
+		if err := json.Unmarshal([]byte(message), &decodedMessage); err != nil {
+			panic(err)
+		}
+		var sendMessage string
+		if decodedMessage.(map[string]interface{})["requestId"] == nil {
+			decodedMessage.(map[string]interface{})["requestId"] = xid.New()
+			bytes, err := json.Marshal(decodedMessage)
+			if err != nil {
 				panic(err)
 			}
-			if decodedMessage.(map[string]interface{})["requestId"] == nil {
-				decodedMessage.(map[string]interface{})["requestId"] = xid.New()
-				bytes, err := json.Marshal(decodedMessage)
-				if err != nil {
-					panic(err)
-				}
-				websocket.Message.Send(client.ws, string(bytes))
-			} else {
-				websocket.Message.Send(client.ws, message)
-			}
-		case <-client.done:
-			return
+			sendMessage = string(bytes)
+		} else {
+			sendMessage = message
 		}
+		log.Debug("Try to send in listenSend: " + sendMessage)
+		websocket.Message.Send(client.ws, sendMessage)
+		client.done <- true
+	case <-client.done:
+		log.Debug("Done listenSend")
+		return
 	}
 }
 
 func (client *Client) readStdin() {
+	reader := bufio.NewReader(os.Stdin)
+	buf := make([]byte, 0)
 	for {
-		reader := bufio.NewReader(os.Stdin)
-		buf := make([]byte, 0)
-		for {
-			line, isPrefix, err := reader.ReadLine()
-			if err != nil {
-				panic(err)
-			}
-			buf = append(buf, line...)
-			if !isPrefix {
-				break
-			}
+		line, isPrefix, err := reader.ReadLine()
+		if err != nil {
+			panic(err)
 		}
-		client.message <- string(buf)
+		buf = append(buf, line...)
+		if !isPrefix {
+			break
+		}
 	}
+	var message = string(buf)
+	log.Debug("Read on readStdin: " + message)
+	client.message <- message
+}
+
+// Close is
+func (client *Client) Close() {
+	log.Debug("Close")
+	client.ws.Close()
 }
 
 // Receive is
-func (client *Client) Receive() {
-	go client.writeStdout()
-	client.listenReceive()
+func (client *Client) Receive(loop bool) {
+	go client.writeStdout(loop)
+	client.listenReceive(loop)
+	<-client.done
 }
 
-func (client *Client) listenReceive() {
+func (client *Client) listenReceive(loop bool) {
 	for {
 		select {
 		case <-client.done:
+			log.Debug("Done listenReceive")
 			return
 		default:
+			log.Debug("Wait on listenReceive")
 			var message string
 			err := websocket.Message.Receive(client.ws, &message)
-			if err == io.EOF {
+			if err == io.EOF || err != nil {
 				client.done <- true
+				continue
 			}
 			client.message <- message
+			if !loop {
+				return
+			}
 		}
 	}
 }
 
-func (client *Client) writeStdout() {
+func (client *Client) writeStdout(loop bool) {
 	for {
 		select {
 		case message := <-client.message:
+			log.Debug("Try to write in writeStdout: " + message)
 			writer := bufio.NewWriter(os.Stdout)
 			fmt.Fprintln(writer, message)
 			if err := writer.Flush(); err != nil {
 				panic(err)
 			}
+			if !loop {
+				client.done <- true
+				return
+			}
 		case <-client.done:
+			log.Debug("Done writeStdout")
 			return
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/rs/xid"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/websocket"
 )
 
@@ -44,6 +45,12 @@ func (client *Client) Send(message string) {
 	}
 }
 
+// Close is
+func (client *Client) Close() {
+	log.Info("Close connection: " + client.id)
+	client.ws.Close()
+}
+
 // Listen is
 func (client *Client) Listen() {
 	go client.listenSend()
@@ -57,6 +64,8 @@ func (client *Client) listenSend() {
 			websocket.Message.Send(client.ws, message)
 		case <-client.done:
 			client.server.Delete(client)
+			client.done <- true
+			log.Info("listenSend done: " + client.id)
 			return
 		}
 	}
@@ -66,15 +75,17 @@ func (client *Client) listenReceive() {
 	for {
 		select {
 		case <-client.done:
-			client.server.Delete(client)
+			log.Info("listenReceive done: " + client.id)
 			return
 		default:
+			log.Info("Wait in listenReceive: " + client.id)
 			var message string
 			err := websocket.Message.Receive(client.ws, &message)
-			client.server.Receive(client, message)
-			if err == io.EOF {
+			if err == io.EOF || err != nil {
 				client.done <- true
+				continue
 			}
+			client.server.Receive(client, message)
 		}
 	}
 }
