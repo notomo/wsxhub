@@ -29,11 +29,17 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c := client.NewClient()
+				c := client.NewClient("{}")
 				defer c.Close()
-				c.Send()
+				c.Send(context.String("json"))
 				c.Receive(false)
 				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "json, j",
+					Usage: "Sent json",
+				},
 			},
 		},
 		{
@@ -43,10 +49,17 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c := client.NewClient()
+				c := client.NewClient(context.String("filter"))
 				defer c.Close()
 				c.Receive(true)
 				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "filter, f",
+					Usage: "Filter received json",
+					Value: "{}",
+				},
 			},
 		},
 	}

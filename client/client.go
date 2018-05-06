@@ -14,13 +14,14 @@ import (
 
 // Client is Websocket client
 type Client struct {
-	ws      *websocket.Conn
-	done    chan bool
-	message chan string
+	ws           *websocket.Conn
+	done         chan bool
+	message      chan string
+	filterString string
 }
 
 // NewClient is
-func NewClient() *Client {
+func NewClient(filterString string) *Client {
 	ws, err := websocket.Dial("ws://localhost:8002", "", "http://localhost/")
 	if err != nil {
 		panic(err)
@@ -28,36 +29,45 @@ func NewClient() *Client {
 	log.Debug("Connect")
 	done := make(chan bool)
 	message := make(chan string)
-	return &Client{ws, done, message}
+	return &Client{ws, done, message, filterString}
 }
 
 // Send is
-func (client *Client) Send() {
-	go client.listenSend()
-	client.readStdin()
-	<-client.done
+func (client *Client) Send(jsons ...string) {
+	if len(jsons) == 0 {
+		go client.listenSend()
+		client.readStdin()
+		<-client.done
+	} else {
+		client.send(jsons[0])
+	}
+}
+
+func (client *Client) send(message string) {
+	var decodedMessage interface{}
+	if err := json.Unmarshal([]byte(message), &decodedMessage); err != nil {
+		panic(err)
+	}
+	var requestID = decodedMessage.(map[string]interface{})["requestId"]
+	if decodedMessage.(map[string]interface{})["requestId"] == nil {
+		requestID = xid.New()
+		decodedMessage.(map[string]interface{})["requestId"] = requestID
+	}
+	var filter = map[string]interface{}{"requestId": requestID}
+	decodedMessage.(map[string]interface{})["filter"] = filter
+	bytes, err := json.Marshal(decodedMessage)
+	if err != nil {
+		panic(err)
+	}
+	var sendMessage = string(bytes)
+	log.Debug("Try to send in listenSend: " + sendMessage)
+	websocket.Message.Send(client.ws, sendMessage)
 }
 
 func (client *Client) listenSend() {
 	select {
 	case message := <-client.message:
-		var decodedMessage interface{}
-		if err := json.Unmarshal([]byte(message), &decodedMessage); err != nil {
-			panic(err)
-		}
-		var sendMessage string
-		if decodedMessage.(map[string]interface{})["requestId"] == nil {
-			decodedMessage.(map[string]interface{})["requestId"] = xid.New()
-			bytes, err := json.Marshal(decodedMessage)
-			if err != nil {
-				panic(err)
-			}
-			sendMessage = string(bytes)
-		} else {
-			sendMessage = message
-		}
-		log.Debug("Try to send in listenSend: " + sendMessage)
-		websocket.Message.Send(client.ws, sendMessage)
+		client.send(message)
 		client.done <- true
 	case <-client.done:
 		log.Debug("Done listenSend")

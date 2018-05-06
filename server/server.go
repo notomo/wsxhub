@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -84,15 +85,23 @@ func (server *Server) SendOutside(message string) {
 	for _, client := range server.outsideClients {
 		client.Send(message)
 	}
-	log.Info("Sent to outside: " + message)
+	log.Info("Finish sending to outside: " + message)
 }
 
 // SendInside is
 func (server *Server) SendInside(message string) {
+	var stringMap map[string]interface{}
+	if err := json.Unmarshal([]byte(message), &stringMap); err != nil {
+		panic(err)
+	}
 	for _, client := range server.insideClients {
+		if client.Filtering(stringMap) {
+			continue
+		}
+		log.Info("Try to send to: " + client.id)
 		client.Send(message)
 	}
-	log.Info("Sent to inside: " + message)
+	log.Info("Finish sending to inside: " + message)
 }
 
 // Listen is
