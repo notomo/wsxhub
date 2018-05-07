@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/rs/xid"
 	log "github.com/sirupsen/logrus"
@@ -36,7 +37,12 @@ func NewClient(ws *websocket.Conn, server *Server, clientType ClientType) *Clien
 	id := xid.New()
 	done := make(chan bool)
 	message := make(chan string)
-	filter := NewStringMapFilter(map[string]interface{}{})
+	filterString := ws.Request().FormValue("filter")
+	decoded, err := url.QueryUnescape(filterString)
+	if err != nil {
+		panic(err)
+	}
+	filter := NewStringMapFilterFromString(decoded)
 	return &Client{id.String(), ws, server, done, message, clientType, filter}
 }
 

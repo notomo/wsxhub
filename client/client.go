@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 
 	"github.com/rs/xid"
@@ -22,7 +23,9 @@ type Client struct {
 
 // NewClient is
 func NewClient(filterString string) *Client {
-	ws, err := websocket.Dial("ws://localhost:8002", "", "http://localhost/")
+	params := url.Values{"filter": {filterString}}
+	url := fmt.Sprintf("ws://localhost:8002/?%s", params.Encode())
+	ws, err := websocket.Dial(url, "", "http://localhost/")
 	if err != nil {
 		panic(err)
 	}

@@ -1,5 +1,7 @@
 package server
 
+import "encoding/json"
+
 // StringMapFilter is
 type StringMapFilter struct {
 	stringMap map[string]interface{}
@@ -8,6 +10,19 @@ type StringMapFilter struct {
 // NewStringMapFilter is
 func NewStringMapFilter(stringMap map[string]interface{}) *StringMapFilter {
 	return &StringMapFilter{stringMap: stringMap}
+}
+
+// NewStringMapFilterFromString is
+func NewStringMapFilterFromString(filterString string) *StringMapFilter {
+	var stringMap interface{}
+	if filterString == "" {
+		stringMap = map[string]interface{}{}
+	} else {
+		if err := json.Unmarshal([]byte(filterString), &stringMap); err != nil {
+			panic(err)
+		}
+	}
+	return &StringMapFilter{stringMap: stringMap.(map[string]interface{})}
 }
 
 // isSubsetOf is
