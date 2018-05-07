@@ -15,10 +15,9 @@ import (
 
 // Client is Websocket client
 type Client struct {
-	ws           *websocket.Conn
-	done         chan bool
-	message      chan string
-	filterString string
+	ws      *websocket.Conn
+	done    chan bool
+	message chan string
 }
 
 // NewClient is
@@ -32,7 +31,7 @@ func NewClient(filterString string) *Client {
 	log.Debug("Connect")
 	done := make(chan bool)
 	message := make(chan string)
-	return &Client{ws, done, message, filterString}
+	return &Client{ws, done, message}
 }
 
 // Send is
