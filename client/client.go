@@ -21,8 +21,8 @@ type Client struct {
 }
 
 // NewClient is
-func NewClient(filterString string) *Client {
-	params := url.Values{"filter": {filterString}}
+func NewClient(filterString string, keyFilterString string) *Client {
+	params := url.Values{"filter": {filterString}, "key": {keyFilterString}}
 	url := fmt.Sprintf("ws://localhost:8002/?%s", params.Encode())
 	ws, err := websocket.Dial(url, "", "http://localhost/")
 	if err != nil {

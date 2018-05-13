@@ -30,6 +30,7 @@ type Client struct {
 	message    chan string
 	clientType ClientType
 	filter     *StringMapFilter
+	keyFilter  *KeyFilter
 }
 
 // NewClient is
@@ -38,12 +39,20 @@ func NewClient(ws *websocket.Conn, server *Server, clientType ClientType) *Clien
 	done := make(chan bool)
 	message := make(chan string)
 	filterString := ws.Request().FormValue("filter")
-	decoded, err := url.QueryUnescape(filterString)
-	if err != nil {
+	var filter *StringMapFilter
+	if decoded, err := url.QueryUnescape(filterString); err == nil {
+		filter = NewStringMapFilterFromString(decoded)
+	} else {
 		panic(err)
 	}
-	filter := NewStringMapFilterFromString(decoded)
-	return &Client{id.String(), ws, server, done, message, clientType, filter}
+	keyFilterString := ws.Request().FormValue("key")
+	var keyFilter *KeyFilter
+	if decoded, err := url.QueryUnescape(keyFilterString); err == nil {
+		keyFilter = NewKeyFilterFromString(decoded)
+	} else {
+		panic(err)
+	}
+	return &Client{id.String(), ws, server, done, message, clientType, filter, keyFilter}
 }
 
 // Send is
@@ -53,6 +62,9 @@ func (client *Client) Send(message string) {
 
 // Filtering is
 func (client *Client) Filtering(stringMap map[string]interface{}) bool {
+	if !client.keyFilter.Match(stringMap) {
+		return true
+	}
 	return !client.filter.isSubsetOf(stringMap)
 }
 

@@ -19,6 +19,11 @@ func main() {
 			Name:  "debug, d",
 			Usage: "Show debug messages",
 		},
+		cli.StringFlag{
+			Name:  "key, k",
+			Usage: "Filter received json key",
+			Value: "{}",
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -29,7 +34,7 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c := client.NewClient("{}")
+				c := client.NewClient("", context.GlobalString("key"))
 				defer c.Close()
 				c.Send(context.String("json"))
 				c.Receive(false)
@@ -49,7 +54,7 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c := client.NewClient(context.String("filter"))
+				c := client.NewClient(context.String("filter"), context.GlobalString("key"))
 				defer c.Close()
 				c.Receive(true)
 				return nil
