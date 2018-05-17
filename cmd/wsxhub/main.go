@@ -24,6 +24,11 @@ func main() {
 			Usage: "Filter received json key",
 			Value: "{}",
 		},
+		cli.StringFlag{
+			Name:  "filter, f",
+			Usage: "Filter received json",
+			Value: "{}",
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -34,7 +39,7 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c := client.NewClient("", context.GlobalString("key"))
+				c := client.NewClientWithID(context.GlobalString("key"))
 				defer c.Close()
 				c.Send(context.String("json"))
 				c.Receive(false)
@@ -54,17 +59,10 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c := client.NewClient(context.String("filter"), context.GlobalString("key"))
+				c := client.NewClient(context.GlobalString("filter"), context.GlobalString("key"))
 				defer c.Close()
 				c.Receive(true)
 				return nil
-			},
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "filter, f",
-					Usage: "Filter received json",
-					Value: "{}",
-				},
 			},
 		},
 	}

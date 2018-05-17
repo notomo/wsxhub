@@ -15,13 +15,26 @@ import (
 
 // Client is Websocket client
 type Client struct {
-	ws      *websocket.Conn
-	done    chan bool
-	message chan string
+	ws        *websocket.Conn
+	done      chan bool
+	message   chan string
+	requestID string
 }
 
 // NewClient is
 func NewClient(filterString string, keyFilterString string) *Client {
+	return newClient(filterString, keyFilterString, "")
+}
+
+// NewClientWithID is
+func NewClientWithID(keyFilterString string) *Client {
+	requestID := xid.New().String()
+	filterString := fmt.Sprintf("{\"requestId\":\"%s\"}", requestID)
+	return newClient(filterString, keyFilterString, requestID)
+}
+
+// NewClient is
+func newClient(filterString string, keyFilterString string, requestID string) *Client {
 	params := url.Values{"filter": {filterString}, "key": {keyFilterString}}
 	url := fmt.Sprintf("ws://localhost:8002/?%s", params.Encode())
 	ws, err := websocket.Dial(url, "", "http://localhost/")
@@ -31,7 +44,7 @@ func NewClient(filterString string, keyFilterString string) *Client {
 	log.Debug("Connect")
 	done := make(chan bool)
 	message := make(chan string)
-	return &Client{ws, done, message}
+	return &Client{ws, done, message, requestID}
 }
 
 // Send is
@@ -50,13 +63,7 @@ func (client *Client) send(message string) {
 	if err := json.Unmarshal([]byte(message), &decodedMessage); err != nil {
 		panic(err)
 	}
-	var requestID = decodedMessage.(map[string]interface{})["requestId"]
-	if decodedMessage.(map[string]interface{})["requestId"] == nil {
-		requestID = xid.New()
-		decodedMessage.(map[string]interface{})["requestId"] = requestID
-	}
-	var filter = map[string]interface{}{"requestId": requestID}
-	decodedMessage.(map[string]interface{})["filter"] = filter
+	decodedMessage.(map[string]interface{})["requestId"] = client.requestID
 	bytes, err := json.Marshal(decodedMessage)
 	if err != nil {
 		panic(err)

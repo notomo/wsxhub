@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
@@ -68,19 +67,6 @@ func (client *Client) Filtering(stringMap map[string]interface{}) bool {
 	return !client.filter.isSubsetOf(stringMap)
 }
 
-func (client *Client) setFilter(message string) {
-	log.Info("Set filter for receive message: " + client.id)
-	var decodedMessage interface{}
-	if err := json.Unmarshal([]byte(message), &decodedMessage); err != nil {
-		panic(err)
-	}
-	value, ok := decodedMessage.(map[string]interface{})["filter"]
-	if !ok {
-		return
-	}
-	client.filter = NewStringMapFilter(value.(map[string]interface{}))
-}
-
 // Close is
 func (client *Client) Close() {
 	log.Info("Close connection: " + client.id)
@@ -123,9 +109,6 @@ func (client *Client) listenReceive() {
 				continue
 			}
 			log.Info("Received in listenReceive: " + client.id + " : " + message)
-			if client.clientType == INSIDE {
-				client.setFilter(message)
-			}
 			client.server.Receive(client, message)
 		}
 	}
