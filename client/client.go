@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/rs/xid"
 	log "github.com/sirupsen/logrus"
@@ -109,13 +111,13 @@ func (client *Client) Close() {
 }
 
 // Receive is
-func (client *Client) Receive(loop bool) {
+func (client *Client) Receive(loop bool, timeout int) {
 	go client.writeStdout(loop)
-	client.listenReceive(loop)
+	client.listenReceive(loop, timeout)
 	<-client.done
 }
 
-func (client *Client) listenReceive(loop bool) {
+func (client *Client) listenReceive(loop bool, timeout int) {
 	for {
 		select {
 		case <-client.done:
@@ -124,7 +126,14 @@ func (client *Client) listenReceive(loop bool) {
 		default:
 			log.Debug("Wait on listenReceive")
 			var message string
+			if timeout > 0 {
+				client.ws.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
+			}
 			err := websocket.Message.Receive(client.ws, &message)
+			if operr, ok := err.(*net.OpError); ok && operr.Timeout() {
+				client.message <- "{\"status\": \"ng\"}"
+				return
+			}
 			if err == io.EOF || err != nil {
 				client.done <- true
 				continue

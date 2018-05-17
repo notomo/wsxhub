@@ -29,6 +29,11 @@ func main() {
 			Usage: "Filter received json",
 			Value: "{}",
 		},
+		cli.IntFlag{
+			Name:  "timeout, t",
+			Usage: "Timeout seconds for receiving",
+			Value: 0,
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -42,7 +47,7 @@ func main() {
 				c := client.NewClientWithID(context.GlobalString("key"))
 				defer c.Close()
 				c.Send(context.String("json"))
-				c.Receive(false)
+				c.Receive(false, context.GlobalInt("timeout"))
 				return nil
 			},
 			Flags: []cli.Flag{
@@ -61,7 +66,7 @@ func main() {
 				}
 				c := client.NewClient(context.GlobalString("filter"), context.GlobalString("key"))
 				defer c.Close()
-				c.Receive(true)
+				c.Receive(true, context.GlobalInt("timeout"))
 				return nil
 			},
 		},
