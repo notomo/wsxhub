@@ -1,8 +1,10 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/websocket"
@@ -120,21 +122,21 @@ func (server *Server) Listen() {
 
 	insideWsMux := http.NewServeMux()
 	insideWsMux.Handle("/", websocket.Handler(onJoined(INSIDE)))
+	insideWsMux.Handle("/done", websocket.Handler(func(ws *websocket.Conn) {
+		ws.Close()
+		server.done <- true
+	}))
 
+	outsideServer := &http.Server{Addr: ":8001", Handler: outsideWsMux}
 	go func() {
 		log.Info("Start outside server")
-		err := http.ListenAndServe(":8001", outsideWsMux)
-		if err != nil {
-			log.Fatal(err)
-		}
+		outsideServer.ListenAndServe()
 	}()
 
+	insideServer := &http.Server{Addr: ":8002", Handler: insideWsMux}
 	go func() {
 		log.Info("Start inside server")
-		err := http.ListenAndServe(":8002", insideWsMux)
-		if err != nil {
-			log.Fatal(err)
-		}
+		insideServer.ListenAndServe()
 	}()
 
 	for {
@@ -168,6 +170,9 @@ func (server *Server) Listen() {
 
 		case <-server.done:
 			log.Info("Done")
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			insideServer.Shutdown(ctx)
+			outsideServer.Shutdown(ctx)
 			return
 		}
 	}
