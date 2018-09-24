@@ -1,4 +1,5 @@
 app:
+    restart: always
     build: .
     ports:
         - "8001:8001"
