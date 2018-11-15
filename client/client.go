@@ -31,7 +31,7 @@ func NewClient(filterString string, keyFilterString string) *Client {
 // NewClientWithID is
 func NewClientWithID(keyFilterString string) *Client {
 	requestID := xid.New().String()
-	filterString := fmt.Sprintf("{\"requestId\":\"%s\"}", requestID)
+	filterString := fmt.Sprintf("{\"id\":\"%s\"}", requestID)
 	return newClient(filterString, keyFilterString, requestID)
 }
 
@@ -65,7 +65,7 @@ func (client *Client) send(message string) {
 	if err := json.Unmarshal([]byte(message), &decodedMessage); err != nil {
 		panic(err)
 	}
-	decodedMessage.(map[string]interface{})["requestId"] = client.requestID
+	decodedMessage.(map[string]interface{})["id"] = client.requestID
 	bytes, err := json.Marshal(decodedMessage)
 	if err != nil {
 		panic(err)
