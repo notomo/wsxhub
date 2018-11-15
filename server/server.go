@@ -170,7 +170,8 @@ func (server *Server) Listen() {
 
 		case <-server.done:
 			log.Info("Done")
-			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
 			insideServer.Shutdown(ctx)
 			outsideServer.Shutdown(ctx)
 			return
