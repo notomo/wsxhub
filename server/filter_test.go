@@ -25,7 +25,7 @@ func TestValueFilter(t *testing.T) {
 		f := NewStringMapFilter(test.filter)
 		got := f.isSubsetOf(test.input)
 		if got != test.want {
-			t.Fatalf("want %q, but %q:", test.want, got)
+			t.Fatalf("want %v, but %v:", test.want, got)
 		}
 	}
 }
@@ -59,7 +59,7 @@ func TestKeyFilter(t *testing.T) {
 		f := NewKeyFilter(test.filter)
 		got := f.Match(test.input)
 		if got != test.want {
-			t.Fatalf("input %q, filter %q, want %q, but %q:", test.input, test.filter, test.want, got)
+			t.Fatalf("input %q, filter %q, want %v, but %v:", test.input, test.filter, test.want, got)
 		}
 	}
 }
