@@ -20,6 +20,11 @@ func main() {
 			Usage: "Show debug messages",
 		},
 		cli.StringFlag{
+			Name:  "regex, r",
+			Usage: "Filter received json value by regular expression",
+			Value: "{}",
+		},
+		cli.StringFlag{
 			Name:  "key, k",
 			Usage: "Filter received json key",
 			Value: "{}",
@@ -64,7 +69,7 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c := client.NewClient(context.GlobalString("filter"), context.GlobalString("key"))
+				c := client.NewClient(context.GlobalString("filter"), context.GlobalString("key"), context.GlobalString("regex"))
 				defer c.Close()
 				c.Receive(true, context.GlobalInt("timeout"))
 				return nil

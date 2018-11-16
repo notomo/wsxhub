@@ -22,14 +22,15 @@ const (
 
 // Client is Websocket client
 type Client struct {
-	id         string
-	ws         *websocket.Conn
-	server     *Server
-	done       chan bool
-	message    chan string
-	clientType ClientType
-	filter     *StringMapFilter
-	keyFilter  *KeyFilter
+	id          string
+	ws          *websocket.Conn
+	server      *Server
+	done        chan bool
+	message     chan string
+	clientType  ClientType
+	filter      *StringMapFilter
+	keyFilter   *KeyFilter
+	regexFilter *RegexFilter
 }
 
 // NewClient is
@@ -51,7 +52,14 @@ func NewClient(ws *websocket.Conn, server *Server, clientType ClientType) *Clien
 	} else {
 		panic(err)
 	}
-	return &Client{id.String(), ws, server, done, message, clientType, filter, keyFilter}
+	regexFilterString := ws.Request().FormValue("regex")
+	var regexFilter *RegexFilter
+	if decoded, err := url.QueryUnescape(regexFilterString); err == nil {
+		regexFilter = NewRegexFilterFromString(decoded)
+	} else {
+		panic(err)
+	}
+	return &Client{id.String(), ws, server, done, message, clientType, filter, keyFilter, regexFilter}
 }
 
 // Send is
@@ -59,12 +67,9 @@ func (client *Client) Send(message string) {
 	client.message <- message
 }
 
-// Filtering is
+// Filtering returns true if stringMap is not match filters
 func (client *Client) Filtering(stringMap map[string]interface{}) bool {
-	if !client.keyFilter.Match(stringMap) {
-		return true
-	}
-	return !client.filter.isSubsetOf(stringMap)
+	return !client.keyFilter.Match(stringMap) || !client.filter.isSubsetOf(stringMap) || !client.regexFilter.Match(stringMap)
 }
 
 // Close is

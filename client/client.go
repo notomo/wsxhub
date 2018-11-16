@@ -24,20 +24,20 @@ type Client struct {
 }
 
 // NewClient is
-func NewClient(filterString string, keyFilterString string) *Client {
-	return newClient(filterString, keyFilterString, "")
+func NewClient(filterString string, keyFilterString string, regexFilterString string) *Client {
+	return newClient(filterString, keyFilterString, regexFilterString, "")
 }
 
 // NewClientWithID is
 func NewClientWithID(keyFilterString string) *Client {
 	requestID := xid.New().String()
 	filterString := fmt.Sprintf("{\"id\":\"%s\"}", requestID)
-	return newClient(filterString, keyFilterString, requestID)
+	return newClient(filterString, keyFilterString, "", requestID)
 }
 
 // NewClient is
-func newClient(filterString string, keyFilterString string, requestID string) *Client {
-	params := url.Values{"filter": {filterString}, "key": {keyFilterString}}
+func newClient(filterString string, keyFilterString string, regexFilterString string, requestID string) *Client {
+	params := url.Values{"filter": {filterString}, "key": {keyFilterString}, "regex": {regexFilterString}}
 	url := fmt.Sprintf("ws://localhost:8002/?%s", params.Encode())
 	ws, err := websocket.Dial(url, "", "http://localhost/")
 	if err != nil {
