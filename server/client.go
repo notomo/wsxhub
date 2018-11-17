@@ -69,7 +69,13 @@ func (client *Client) Send(message string) {
 
 // Filtering returns true if stringMap is not match filters
 func (client *Client) Filtering(stringMap map[string]interface{}) bool {
-	return !client.keyFilter.Match(stringMap) || !client.filter.isSubsetOf(stringMap) || !client.regexFilter.Match(stringMap)
+	if !client.keyFilter.Match(stringMap) {
+		return true
+	}
+	if !client.filter.isSubsetOf(stringMap) {
+		return true
+	}
+	return !client.regexFilter.Match(stringMap)
 }
 
 // Close is

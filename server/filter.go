@@ -95,27 +95,18 @@ func toRegexMap(stringMap map[string]interface{}) *RegexMap {
 
 // RegexMapNode represents RegexMap|RegexMapLeaf
 type RegexMapNode interface {
-	match(key string, e interface{}) bool
+	match(e interface{}) bool
 }
 
-func (regexMap *RegexMap) match(key string, e interface{}) bool {
-	node, ok := regexMap.nodes[key]
-	if !ok {
-		return true
-	}
-
-	s, isString := e.(string)
-	if isString {
-		return node.match(key, s)
-	}
-
+func (regexMap *RegexMap) match(e interface{}) bool {
 	stringMap, isStringMap := e.(map[string]interface{})
 	if !isStringMap {
 		return false
 	}
 
-	for k, v := range stringMap {
-		if !node.match(k, v) {
+	for key, node := range regexMap.nodes {
+		value, ok := stringMap[key]
+		if !ok || !node.match(value) {
 			return false
 		}
 	}
@@ -137,7 +128,7 @@ type RegexMapLeaf struct {
 	regex *regexp.Regexp
 }
 
-func (regexMapLeaf *RegexMapLeaf) match(_ string, e interface{}) bool {
+func (regexMapLeaf *RegexMapLeaf) match(e interface{}) bool {
 	s, ok := e.(string)
 	if !ok {
 		return false
@@ -178,16 +169,7 @@ func (filter *KeyFilter) Match(stringMap map[string]interface{}) bool {
 
 // Match returns true if values of the stringMap matches filter regular expression
 func (filter *RegexFilter) Match(stringMap map[string]interface{}) bool {
-	return regexMatch(filter.regexMap, stringMap)
-}
-
-func regexMatch(a RegexMapNode, b map[string]interface{}) bool {
-	for key, value := range b {
-		if !a.match(key, value) {
-			return false
-		}
-	}
-	return true
+	return (*filter.regexMap).match(stringMap)
 }
 
 func match(a map[string]interface{}, b map[string]interface{}) bool {

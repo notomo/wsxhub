@@ -74,20 +74,21 @@ func TestRegexFilter(t *testing.T) {
 		filter S
 		want   bool
 	}{
-		{input: S{"otherField": "otherValue"}, filter: S{"neededField": "neededValue"}, want: true},
+		{input: S{"otherField": "otherValue"}, filter: S{"neededField": "neededValue"}, want: false},
 		{input: S{"neededField": "otherValue"}, filter: S{"neededField": "neededValue"}, want: false},
 		{input: S{"neededField": "neededValue"}, filter: S{"neededField": "neededValue"}, want: true},
 		{input: S{"neededField": "neededValue2"}, filter: S{"neededField": "neededValue1|neededValue2"}, want: true},
 		{input: S{"neededField": S{"nestField": "neededValue2"}}, filter: S{"neededField": S{"nestField": "neededValue1|neededValue2"}}, want: true},
 		{input: S{"neededField": S{"nestField": "otherValue"}}, filter: S{"neededField": S{"nestField": "neededValue1|neededValue2"}}, want: false},
 		{input: S{"neededField": "neededValue"}, filter: S{}, want: true},
+		{input: S{}, filter: S{"neededField": "neededValue"}, want: false},
 	}
 
 	for _, test := range tests {
 		f := NewRegexFilter(test.filter)
 		got := f.Match(test.input)
 		if got != test.want {
-			t.Fatalf("want %v, but %v:", test.want, got)
+			t.Fatalf("input %q, filter %q, want %v, but %v:", test.input, test.filter, test.want, got)
 		}
 	}
 }
