@@ -80,14 +80,12 @@ func (server *Server) Receive(client *Client, message string) {
 // SendOutside is
 func (server *Server) SendOutside(message string) {
 	if len(server.outsideClients) == 0 {
-		log.Info("Sent to outside but there is no clients: " + message)
 		server.SendInside(message)
 		return
 	}
 	for _, client := range server.outsideClients {
 		client.Send(message)
 	}
-	log.Info("Finish sending to outside: " + message)
 }
 
 // SendInside is
@@ -100,10 +98,8 @@ func (server *Server) SendInside(message string) {
 		if client.Filtering(stringMap) {
 			continue
 		}
-		log.Info("Try to send to: " + client.id)
 		client.Send(message)
 	}
-	log.Info("Finish sending to inside: " + message)
 }
 
 // Listen is
@@ -161,11 +157,9 @@ func (server *Server) Listen() {
 			client.Close()
 
 		case message := <-server.outsideMessage:
-			log.Info("Receive from outside: " + message)
 			server.SendInside(message)
 
 		case message := <-server.insideMessage:
-			log.Info("Receive from inside: " + message)
 			server.SendOutside(message)
 
 		case <-server.done:

@@ -1,12 +1,10 @@
 package server
 
 import (
-	"fmt"
 	"io"
 	"net/url"
 
 	"github.com/rs/xid"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/websocket"
 )
 
@@ -80,7 +78,6 @@ func (client *Client) Filtering(stringMap map[string]interface{}) bool {
 
 // Close is
 func (client *Client) Close() {
-	log.Info("Close connection: " + client.id)
 	client.ws.Close()
 }
 
@@ -95,11 +92,9 @@ func (client *Client) listenSend() {
 		select {
 		case message := <-client.message:
 			websocket.Message.Send(client.ws, message)
-			log.Info(fmt.Sprintf("Sent: %s : %s", client.id, message))
 		case <-client.done:
 			client.server.Delete(client)
 			client.done <- true
-			log.Info("listenSend done: " + client.id)
 			return
 		}
 	}
@@ -109,17 +104,14 @@ func (client *Client) listenReceive() {
 	for {
 		select {
 		case <-client.done:
-			log.Info("Done listenReceive: " + client.id)
 			return
 		default:
-			log.Info("Wait in listenReceive: " + client.id)
 			var message string
 			err := websocket.Message.Receive(client.ws, &message)
 			if err == io.EOF || err != nil {
 				client.done <- true
 				continue
 			}
-			log.Info("Received in listenReceive: " + client.id + " : " + message)
 			client.server.Receive(client, message)
 		}
 	}

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/rs/xid"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/websocket"
 )
 
@@ -43,7 +42,6 @@ func newClient(filterString string, keyFilterString string, regexFilterString st
 	if err != nil {
 		panic(err)
 	}
-	log.Debug("Connect")
 	done := make(chan bool)
 	message := make(chan string)
 	return &Client{ws, done, message, requestID}
@@ -71,7 +69,6 @@ func (client *Client) send(message string) {
 		panic(err)
 	}
 	var sendMessage = string(bytes)
-	log.Debug("Try to send in listenSend: " + sendMessage)
 	websocket.Message.Send(client.ws, sendMessage)
 }
 
@@ -81,7 +78,6 @@ func (client *Client) listenSend() {
 		client.send(message)
 		client.done <- true
 	case <-client.done:
-		log.Debug("Done listenSend")
 		return
 	}
 }
@@ -100,13 +96,11 @@ func (client *Client) readStdin() {
 		}
 	}
 	var message = string(buf)
-	log.Debug("Read on readStdin: " + message)
 	client.message <- message
 }
 
 // Close is
 func (client *Client) Close() {
-	log.Debug("Close")
 	client.ws.Close()
 }
 
@@ -121,10 +115,8 @@ func (client *Client) listenReceive(loop bool, timeout int) {
 	for {
 		select {
 		case <-client.done:
-			log.Debug("Done listenReceive")
 			return
 		default:
-			log.Debug("Wait on listenReceive")
 			var message string
 			if timeout > 0 {
 				client.ws.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
@@ -150,7 +142,6 @@ func (client *Client) writeStdout(loop bool) {
 	for {
 		select {
 		case message := <-client.message:
-			log.Debug("Try to write in writeStdout: " + message)
 			writer := bufio.NewWriter(os.Stdout)
 			fmt.Fprintln(writer, message)
 			if err := writer.Flush(); err != nil {
@@ -161,7 +152,6 @@ func (client *Client) writeStdout(loop bool) {
 				return
 			}
 		case <-client.done:
-			log.Debug("Done writeStdout")
 			return
 		}
 	}
