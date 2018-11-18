@@ -2,17 +2,18 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// StringMapFilter is
+// StringMapFilter filters values
 type StringMapFilter struct {
 	stringMap map[string]interface{}
 }
 
-// KeyFilter is
+// KeyFilter filters keys
 type KeyFilter struct {
 	stringMap map[string]interface{}
 }
@@ -22,51 +23,53 @@ type RegexFilter struct {
 	regexMap *RegexMap
 }
 
-// NewStringMapFilter is
+// NewStringMapFilter creates StringMapFilter
 func NewStringMapFilter(stringMap map[string]interface{}) *StringMapFilter {
 	return &StringMapFilter{stringMap: stringMap}
 }
 
-// NewKeyFilter is
+// NewKeyFilter creates KeyFilter
 func NewKeyFilter(stringMap map[string]interface{}) *KeyFilter {
 	return &KeyFilter{stringMap: stringMap}
 }
 
-// NewRegexFilter create RegexFilter
+// NewRegexFilter creates RegexFilter
 func NewRegexFilter(stringMap map[string]interface{}) *RegexFilter {
 	return &RegexFilter{regexMap: toRegexMap(stringMap)}
 }
 
-// NewStringMapFilterFromString is
-func NewStringMapFilterFromString(filterString string) *StringMapFilter {
-	return &StringMapFilter{stringMap: newStringMapFromString(filterString)}
+// NewStringMapFilterFromString creates StringMapFilter from json string
+func NewStringMapFilterFromString(filterString string) (*StringMapFilter, error) {
+	stringMap, err := newStringMapFromString(filterString)
+	return &StringMapFilter{stringMap: stringMap}, err
 }
 
-// NewKeyFilterFromString is
-func NewKeyFilterFromString(filterString string) *KeyFilter {
-	return &KeyFilter{stringMap: newStringMapFromString(filterString)}
+// NewKeyFilterFromString creates KeyFilter from json string
+func NewKeyFilterFromString(filterString string) (*KeyFilter, error) {
+	stringMap, err := newStringMapFromString(filterString)
+	return &KeyFilter{stringMap: stringMap}, err
 }
 
-// NewRegexFilterFromString create RegexFilter from json string
-func NewRegexFilterFromString(filterString string) *RegexFilter {
-	stringMap := newStringMapFromString(filterString)
-	return &RegexFilter{regexMap: toRegexMap(stringMap)}
+// NewRegexFilterFromString creates RegexFilter from json string
+func NewRegexFilterFromString(filterString string) (*RegexFilter, error) {
+	stringMap, err := newStringMapFromString(filterString)
+	return &RegexFilter{regexMap: toRegexMap(stringMap)}, err
 }
 
-func newStringMapFromString(filterString string) map[string]interface{} {
+func newStringMapFromString(filterString string) (map[string]interface{}, error) {
 	var stringMap interface{}
 	if filterString == "" {
 		stringMap = map[string]interface{}{}
 	} else {
 		if err := json.Unmarshal([]byte(filterString), &stringMap); err != nil {
-			panic(err)
+			return nil, err
 		}
 	}
 	value, ok := stringMap.(map[string]interface{})
 	if !ok {
-		panic(stringMap)
+		return nil, fmt.Errorf("filter json parse error")
 	}
-	return value
+	return value, nil
 }
 
 func toRegexMap(stringMap map[string]interface{}) *RegexMap {

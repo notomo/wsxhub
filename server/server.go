@@ -102,11 +102,16 @@ func (server *Server) SendInside(message string) {
 	}
 }
 
-// Listen is
+// Listen requests
 func (server *Server) Listen() {
 	onJoined := func(clientType ClientType) func(*websocket.Conn) {
 		return func(ws *websocket.Conn) {
-			client := NewClient(ws, server, clientType)
+			client, err := NewClient(ws, server, clientType)
+			if err != nil {
+				ws.Close()
+				log.Error(err)
+				return
+			}
 			defer client.Close()
 			server.Add(client)
 			client.Listen()

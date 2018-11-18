@@ -32,32 +32,43 @@ type Client struct {
 }
 
 // NewClient is
-func NewClient(ws *websocket.Conn, server *Server, clientType ClientType) *Client {
+func NewClient(ws *websocket.Conn, server *Server, clientType ClientType) (*Client, error) {
 	id := xid.New()
 	done := make(chan bool)
 	message := make(chan string)
+
 	filterString := ws.Request().FormValue("filter")
-	var filter *StringMapFilter
-	if decoded, err := url.QueryUnescape(filterString); err == nil {
-		filter = NewStringMapFilterFromString(decoded)
-	} else {
-		panic(err)
+	decodedFilterString, decodedFilterErr := url.QueryUnescape(filterString)
+	if decodedFilterErr != nil {
+		return nil, decodedFilterErr
 	}
+	filter, filterErr := NewStringMapFilterFromString(decodedFilterString)
+	if filterErr != nil {
+		return nil, filterErr
+	}
+
 	keyFilterString := ws.Request().FormValue("key")
 	var keyFilter *KeyFilter
-	if decoded, err := url.QueryUnescape(keyFilterString); err == nil {
-		keyFilter = NewKeyFilterFromString(decoded)
-	} else {
-		panic(err)
+	decodedKeyFilterString, decodedKeyFilterErr := url.QueryUnescape(keyFilterString)
+	if decodedKeyFilterErr != nil {
+		return nil, decodedKeyFilterErr
 	}
+	keyFilter, keyFilterErr := NewKeyFilterFromString(decodedKeyFilterString)
+	if keyFilterErr != nil {
+		return nil, keyFilterErr
+	}
+
 	regexFilterString := ws.Request().FormValue("regex")
-	var regexFilter *RegexFilter
-	if decoded, err := url.QueryUnescape(regexFilterString); err == nil {
-		regexFilter = NewRegexFilterFromString(decoded)
-	} else {
-		panic(err)
+	decodedRegexFilterString, decodedRegexFilterErr := url.QueryUnescape(regexFilterString)
+	if decodedRegexFilterErr != nil {
+		return nil, decodedRegexFilterErr
 	}
-	return &Client{id.String(), ws, server, done, message, clientType, filter, keyFilter, regexFilter}
+	regexFilter, regexFilterErr := NewRegexFilterFromString(decodedRegexFilterString)
+	if regexFilterErr != nil {
+		return nil, regexFilterErr
+	}
+
+	return &Client{id.String(), ws, server, done, message, clientType, filter, keyFilter, regexFilter}, nil
 }
 
 // Send is
