@@ -49,7 +49,10 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c := client.NewClientWithID(context.GlobalString("key"))
+				c, err := client.NewClientWithID(context.GlobalString("key"))
+				if err != nil {
+					return err
+				}
 				defer c.Close()
 				c.Send(context.String("json"))
 				c.Receive(false, context.GlobalInt("timeout"))
@@ -69,7 +72,10 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c := client.NewClient(context.GlobalString("filter"), context.GlobalString("key"), context.GlobalString("regex"))
+				c, err := client.NewClient(context.GlobalString("filter"), context.GlobalString("key"), context.GlobalString("regex"))
+				if err != nil {
+					return err
+				}
 				defer c.Close()
 				c.Receive(true, context.GlobalInt("timeout"))
 				return nil
