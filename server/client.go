@@ -8,13 +8,13 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-// ClientType is
+// ClientType is a targeting client type
 type ClientType int
 
 const (
-	// INSIDE is
+	// INSIDE targets the wsxhub client
 	INSIDE ClientType = iota
-	// OUTSIDE is
+	// OUTSIDE targets the other client
 	OUTSIDE
 )
 
@@ -31,7 +31,7 @@ type Client struct {
 	regexFilter *RegexFilter
 }
 
-// NewClient is
+// NewClient creates a client
 func NewClient(ws *websocket.Conn, server *Server, clientType ClientType) (*Client, error) {
 	id := xid.New()
 	done := make(chan bool)
@@ -71,7 +71,7 @@ func NewClient(ws *websocket.Conn, server *Server, clientType ClientType) (*Clie
 	return &Client{id.String(), ws, server, done, message, clientType, filter, keyFilter, regexFilter}, nil
 }
 
-// Send is
+// Send a message
 func (client *Client) Send(message string) {
 	client.message <- message
 }
@@ -87,12 +87,12 @@ func (client *Client) Filtering(stringMap map[string]interface{}) bool {
 	return !client.regexFilter.Match(stringMap)
 }
 
-// Close is
+// Close the connection
 func (client *Client) Close() {
 	client.ws.Close()
 }
 
-// Listen is
+// Listen sending and receiving
 func (client *Client) Listen() {
 	go client.listenSend()
 	client.listenReceive()

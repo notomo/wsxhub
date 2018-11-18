@@ -139,7 +139,7 @@ func (regexMapLeaf *RegexMapLeaf) match(e interface{}) bool {
 	return regexMapLeaf.regex.MatchString(s)
 }
 
-// isSubsetOf is
+// isSubsetOf returns true if stringMap is a subset of this filter
 func (filter *StringMapFilter) isSubsetOf(stringMap map[string]interface{}) bool {
 	return isSubset(filter.stringMap, stringMap)
 }
@@ -165,7 +165,7 @@ func isSubset(a map[string]interface{}, b map[string]interface{}) bool {
 	return true
 }
 
-// Match is
+// Match returns true if stringMap is filtered
 func (filter *KeyFilter) Match(stringMap map[string]interface{}) bool {
 	return match(filter.stringMap, stringMap)
 }

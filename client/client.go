@@ -46,7 +46,7 @@ func newClient(filterString string, keyFilterString string, regexFilterString st
 	return &Client{ws, done, message, requestID}, nil
 }
 
-// Send is
+// Send a message to wsxhubd
 func (client *Client) Send(jsons ...string) {
 	if len(jsons) == 0 {
 		go client.listenSend()
@@ -98,12 +98,12 @@ func (client *Client) readStdin() {
 	client.message <- message
 }
 
-// Close is
+// Close the connection
 func (client *Client) Close() {
 	client.ws.Close()
 }
 
-// Receive is
+// Receive messages
 func (client *Client) Receive(loop bool, timeout int) {
 	go client.writeStdout(loop)
 	client.listenReceive(loop, timeout)

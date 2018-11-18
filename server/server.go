@@ -10,7 +10,7 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-// Server is
+// Server represents the websocket server
 type Server struct {
 	outsideClients map[string]*Client
 	outsideJoined  chan *Client
@@ -23,7 +23,7 @@ type Server struct {
 	done           chan bool
 }
 
-// NewServer is
+// NewServer creates a server
 func NewServer() *Server {
 	outsideClients := make(map[string]*Client)
 	outsideJoined := make(chan *Client)
@@ -47,7 +47,7 @@ func NewServer() *Server {
 	}
 }
 
-// Add is
+// Add a client to this server
 func (server *Server) Add(client *Client) {
 	switch client.clientType {
 	case INSIDE:
@@ -57,7 +57,7 @@ func (server *Server) Add(client *Client) {
 	}
 }
 
-// Delete is
+// Delete a client from this server
 func (server *Server) Delete(client *Client) {
 	switch client.clientType {
 	case INSIDE:
@@ -67,7 +67,7 @@ func (server *Server) Delete(client *Client) {
 	}
 }
 
-// Receive is
+// Receive a message from client
 func (server *Server) Receive(client *Client, message string) {
 	switch client.clientType {
 	case INSIDE:
@@ -77,7 +77,7 @@ func (server *Server) Receive(client *Client, message string) {
 	}
 }
 
-// SendOutside is
+// SendOutside sends a message to the outside client
 func (server *Server) SendOutside(message string) {
 	if len(server.outsideClients) == 0 {
 		server.SendInside(message)
@@ -88,7 +88,7 @@ func (server *Server) SendOutside(message string) {
 	}
 }
 
-// SendInside is
+// SendInside sends a message to the inside client
 func (server *Server) SendInside(message string) {
 	var stringMap map[string]interface{}
 	if err := json.Unmarshal([]byte(message), &stringMap); err != nil {
