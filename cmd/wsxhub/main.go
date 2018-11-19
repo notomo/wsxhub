@@ -59,7 +59,11 @@ func main() {
 					return cli.NewExitError("input json parse error", 1)
 				}
 
-				c.Receive(false, context.GlobalInt("timeout"))
+				receiveErr := c.Receive(false, context.GlobalInt("timeout"))
+				if receiveErr != nil {
+					log.Error(receiveErr)
+					return receiveErr
+				}
 				return nil
 			},
 			Flags: []cli.Flag{
@@ -81,7 +85,11 @@ func main() {
 					return err
 				}
 				defer c.Close()
-				c.Receive(true, context.GlobalInt("timeout"))
+				receiveErr := c.Receive(true, context.GlobalInt("timeout"))
+				if receiveErr != nil {
+					log.Error(receiveErr)
+					return receiveErr
+				}
 				return nil
 			},
 		},

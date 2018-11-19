@@ -19,6 +19,7 @@ type Client struct {
 	ws        *websocket.Conn
 	done      chan bool
 	message   chan string
+	writeErr  chan error
 	requestID string
 }
 
@@ -43,7 +44,8 @@ func newClient(filterString string, keyFilterString string, regexFilterString st
 	}
 	done := make(chan bool)
 	message := make(chan string)
-	return &Client{ws, done, message, requestID}, nil
+	writeErr := make(chan error)
+	return &Client{ws, done, message, writeErr, requestID}, nil
 }
 
 // Send a message to wsxhubd
@@ -68,10 +70,15 @@ func (client *Client) Close() {
 }
 
 // Receive messages
-func (client *Client) Receive(loop bool, timeout int) {
+func (client *Client) Receive(loop bool, timeout int) error {
 	go client.writeStdout(loop)
 	client.listenReceive(loop, timeout)
-	<-client.done
+	select {
+	case writeErr := <-client.writeErr:
+		return writeErr
+	case <-client.done:
+		return nil
+	}
 }
 
 func (client *Client) listenReceive(loop bool, timeout int) {
@@ -108,7 +115,7 @@ func (client *Client) writeStdout(loop bool) {
 			writer := bufio.NewWriter(os.Stdout)
 			fmt.Fprintln(writer, message)
 			if err := writer.Flush(); err != nil {
-				panic(err)
+				client.writeErr <- err
 			}
 			if !loop {
 				client.done <- true
