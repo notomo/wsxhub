@@ -54,7 +54,11 @@ func main() {
 					return err
 				}
 				defer c.Close()
-				c.Send(context.String("json"))
+				sendErr := c.Send(context.String("json"))
+				if sendErr != nil {
+					return cli.NewExitError("input json parse error", 1)
+				}
+
 				c.Receive(false, context.GlobalInt("timeout"))
 				return nil
 			},

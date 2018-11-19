@@ -47,55 +47,19 @@ func newClient(filterString string, keyFilterString string, regexFilterString st
 }
 
 // Send a message to wsxhubd
-func (client *Client) Send(jsons ...string) {
-	if len(jsons) == 0 {
-		go client.listenSend()
-		client.readStdin()
-		<-client.done
-	} else {
-		client.send(jsons[0])
-	}
-}
-
-func (client *Client) send(message string) {
+func (client *Client) Send(message string) error {
 	var decodedMessage interface{}
 	if err := json.Unmarshal([]byte(message), &decodedMessage); err != nil {
-		panic(err)
+		return err
 	}
 	decodedMessage.(map[string]interface{})["id"] = client.requestID
 	bytes, err := json.Marshal(decodedMessage)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	var sendMessage = string(bytes)
 	websocket.Message.Send(client.ws, sendMessage)
-}
-
-func (client *Client) listenSend() {
-	select {
-	case message := <-client.message:
-		client.send(message)
-		client.done <- true
-	case <-client.done:
-		return
-	}
-}
-
-func (client *Client) readStdin() {
-	reader := bufio.NewReader(os.Stdin)
-	buf := make([]byte, 0)
-	for {
-		line, isPrefix, err := reader.ReadLine()
-		if err != nil {
-			panic(err)
-		}
-		buf = append(buf, line...)
-		if !isPrefix {
-			break
-		}
-	}
-	var message = string(buf)
-	client.message <- message
+	return nil
 }
 
 // Close the connection
