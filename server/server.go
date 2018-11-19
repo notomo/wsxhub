@@ -78,21 +78,21 @@ func (server *Server) Receive(client *Client, message string) {
 }
 
 // SendOutside sends a message to the outside client
-func (server *Server) SendOutside(message string) {
+func (server *Server) SendOutside(message string) error {
 	if len(server.outsideClients) == 0 {
-		server.SendInside(message)
-		return
+		return server.SendInside(message)
 	}
 	for _, client := range server.outsideClients {
 		client.Send(message)
 	}
+	return nil
 }
 
 // SendInside sends a message to the inside client
-func (server *Server) SendInside(message string) {
+func (server *Server) SendInside(message string) error {
 	var stringMap map[string]interface{}
 	if err := json.Unmarshal([]byte(message), &stringMap); err != nil {
-		panic(err)
+		return err
 	}
 	for _, client := range server.insideClients {
 		if client.Filtering(stringMap) {
@@ -100,6 +100,8 @@ func (server *Server) SendInside(message string) {
 		}
 		client.Send(message)
 	}
+
+	return nil
 }
 
 // Listen requests
@@ -162,10 +164,16 @@ func (server *Server) Listen() {
 			client.Close()
 
 		case message := <-server.outsideMessage:
-			server.SendInside(message)
+			err := server.SendInside(message)
+			if err != nil {
+				log.Error(err)
+			}
 
 		case message := <-server.insideMessage:
-			server.SendOutside(message)
+			err := server.SendOutside(message)
+			if err != nil {
+				log.Error(err)
+			}
 
 		case <-server.done:
 			log.Info("Done")
