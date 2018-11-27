@@ -93,7 +93,7 @@ func (client *Client) listenReceive(loop bool, timeout int) {
 			}
 			err := websocket.Message.Receive(client.ws, &message)
 			if operr, ok := err.(*net.OpError); ok && operr.Timeout() {
-				client.message <- "{\"status\": \"ng\"}"
+				client.message <- "{\"error\": {\"data\":{\"name\": \"TimeoutError\"}, \"message\": \"Timeout error\"}}"
 				return
 			}
 			if err == io.EOF || err != nil {

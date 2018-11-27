@@ -79,9 +79,6 @@ func (server *Server) Receive(client *Client, message string) {
 
 // SendOutside sends a message to the outside client
 func (server *Server) SendOutside(message string) error {
-	if len(server.outsideClients) == 0 {
-		return server.SendInside(message)
-	}
 	for _, client := range server.outsideClients {
 		client.Send(message)
 	}
