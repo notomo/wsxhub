@@ -51,7 +51,7 @@ func main() {
 				}
 				c, err := client.NewClientWithID(context.GlobalString("key"))
 				if err != nil {
-					return err
+					return cli.NewExitError("connection error", 1)
 				}
 				defer c.Close()
 				sendErr := c.Send(context.String("json"))
