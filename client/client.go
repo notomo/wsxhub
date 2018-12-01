@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/rs/xid"
@@ -24,19 +25,19 @@ type Client struct {
 }
 
 // NewClient returns a client
-func NewClient(filterString string, keyFilterString string, regexFilterString string) (*Client, error) {
-	return newClient(filterString, keyFilterString, regexFilterString, "")
+func NewClient(filterString string, keyFilterString string, regexFilterString string, debounceInterval int) (*Client, error) {
+	return newClient(filterString, keyFilterString, regexFilterString, debounceInterval, "")
 }
 
 // NewClientWithID returns a client with the request id
 func NewClientWithID(keyFilterString string) (*Client, error) {
 	requestID := xid.New().String()
 	filterString := fmt.Sprintf("{\"id\":\"%s\"}", requestID)
-	return newClient(filterString, keyFilterString, "", requestID)
+	return newClient(filterString, keyFilterString, "", 0, requestID)
 }
 
-func newClient(filterString string, keyFilterString string, regexFilterString string, requestID string) (*Client, error) {
-	params := url.Values{"filter": {filterString}, "key": {keyFilterString}, "regex": {regexFilterString}}
+func newClient(filterString string, keyFilterString string, regexFilterString string, debounceInterval int, requestID string) (*Client, error) {
+	params := url.Values{"filter": {filterString}, "key": {keyFilterString}, "regex": {regexFilterString}, "debounceInterval": {strconv.Itoa(debounceInterval)}}
 	url := fmt.Sprintf("ws://localhost:8002/?%s", params.Encode())
 	ws, err := websocket.Dial(url, "", "http://localhost/")
 	if err != nil {

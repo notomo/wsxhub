@@ -3,6 +3,8 @@ package server
 import (
 	"io"
 	"net/url"
+	"strconv"
+	"time"
 
 	"github.com/rs/xid"
 	"golang.org/x/net/websocket"
@@ -20,15 +22,16 @@ const (
 
 // Client is Websocket client
 type Client struct {
-	id          string
-	ws          *websocket.Conn
-	server      *Server
-	done        chan bool
-	message     chan string
-	clientType  ClientType
-	filter      *StringMapFilter
-	keyFilter   *KeyFilter
-	regexFilter *RegexFilter
+	id               string
+	ws               *websocket.Conn
+	server           *Server
+	done             chan bool
+	message          chan string
+	clientType       ClientType
+	filter           *StringMapFilter
+	keyFilter        *KeyFilter
+	regexFilter      *RegexFilter
+	debounceInterval int
 }
 
 // NewClient creates a client
@@ -68,7 +71,16 @@ func NewClient(ws *websocket.Conn, server *Server, clientType ClientType) (*Clie
 		return nil, regexFilterErr
 	}
 
-	return &Client{id.String(), ws, server, done, message, clientType, filter, keyFilter, regexFilter}, nil
+	debounceIntervalString := ws.Request().FormValue("debounceInterval")
+	if debounceIntervalString == "" {
+		debounceIntervalString = "0"
+	}
+	debounceInterval, ok := strconv.Atoi(debounceIntervalString)
+	if ok != nil {
+		return nil, ok
+	}
+
+	return &Client{id.String(), ws, server, done, message, clientType, filter, keyFilter, regexFilter, debounceInterval}, nil
 }
 
 // Send a message
@@ -99,10 +111,20 @@ func (client *Client) Listen() {
 }
 
 func (client *Client) listenSend() {
+	var timer *time.Timer
 	for {
 		select {
 		case message := <-client.message:
-			websocket.Message.Send(client.ws, message)
+			if timer != nil {
+				timer.Stop()
+			}
+			if client.debounceInterval > 0 {
+				timer = time.AfterFunc(time.Duration(client.debounceInterval)*time.Millisecond, func() {
+					websocket.Message.Send(client.ws, message)
+				})
+			} else {
+				websocket.Message.Send(client.ws, message)
+			}
 		case <-client.done:
 			client.server.Delete(client)
 			client.done <- true

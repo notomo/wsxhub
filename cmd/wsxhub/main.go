@@ -80,7 +80,7 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c, err := client.NewClient(context.GlobalString("filter"), context.GlobalString("key"), context.GlobalString("regex"))
+				c, err := client.NewClient(context.GlobalString("filter"), context.GlobalString("key"), context.GlobalString("regex"), context.Int("debounce"))
 				if err != nil {
 					return err
 				}
@@ -91,6 +91,12 @@ func main() {
 					return receiveErr
 				}
 				return nil
+			},
+			Flags: []cli.Flag{
+				cli.IntFlag{
+					Name:  "debounce, D",
+					Usage: "Debounce interval(ms)",
+				},
 			},
 		},
 	}
