@@ -10,6 +10,12 @@ reup:
 	docker-compose down
 	docker-compose up -d
 
+v=
+deploy:
+	git tag v${v}
+	git push origin v${v}
+
 .PHONY: test
 .PHONY: install
 .PHONY: reup
+.PHONY: deploy
