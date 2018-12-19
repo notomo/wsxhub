@@ -32,7 +32,6 @@ deploy:
         - dist/wsxhub-windows-amd64-$TRAVIS_TAG.zip
         - dist/wsxhub-darwin-amd64-$TRAVIS_TAG.zip
     skip_cleanup: true
-    draft: true
     on:
         repo: notomo/wsxhub
         tags: true
