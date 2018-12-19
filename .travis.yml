@@ -26,7 +26,6 @@ deploy:
     provider: releases
     api_key:
         secure: viUq3NFiqoH5P8rYnyVSyqukmKfhQpZCD6GHtGhzWXsJWc+NDjoDIO727Ql9QkDZvQNY+i8zxku5vdqgBsbEnb3DwEDAb4VVyoshyZJKiWi6TolfeMZIK8ciqjDjFTMSAXFFTtM2fH/XO06a5a6JB9D5D2HzOkoI+bQNE0kwJi+QORFVG0Be1iPcwdKysRQsXdWJZQb9ZDyx9sMjntdBE8CYXsjZhbGgftq5FfaKVz+SC61cyQxeCwxLJph3Tp7x5Gk+XvSmFAUakNdVa+e8KDRDg8TUi3HfpbZIuT6cSk0iX2UY1Lqu778b+2EUsnchZdh1SDOWRWFQ8+B8/slyu5P2NWQFR8WBp6eBOuoR4YUWkwgNekIchCyqpjRGILyefMDOnjXzARBeMy/pwjgGiIsVQquPTMyA1eWE0wbLz55jIfoTQDmRNLqFGT/zBP5Ss3db6xZ9os+sd2fl+wrPEZ8SUDEFx+e6kpnqo4sJSCDNtDF9Lu+BKfVIcgg7XkDfqDyW/ArPfI0FQvxm3aQhTKMoTQBq3ROmSSKfBEFWIMy/xdWbaM8zsXvBytgfCPfEtIzDjD3m+Z+7HtgNnak2q1IpSevRqrteq9SPGv/Wn2z3xPALHbt97aK6bXWMnNFZmjQOtYWHdbIHYIR5b45GBzf8EpvpJX2hBXHzz6zaUwA=
-    file_glob: true
     file:
         - dist/wsxhub-linux-amd64-$TRAVIS_TAG.zip
         - dist/wsxhub-windows-amd64-$TRAVIS_TAG.zip
