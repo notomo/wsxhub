@@ -12,7 +12,7 @@ func main() {
 
 	app.Name = "wsxhubd"
 	app.Usage = "websocket server"
-	app.Version = "0.0.1"
+	app.Version = "0.0.2"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "outside, o",

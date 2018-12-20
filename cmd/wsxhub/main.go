@@ -13,7 +13,7 @@ func main() {
 
 	app.Name = "wsxhub"
 	app.Usage = "websocket client from stdio"
-	app.Version = "0.0.1"
+	app.Version = "0.0.2"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "debug, d",
