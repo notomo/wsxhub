@@ -1,8 +1,11 @@
 app:
     restart: always
     build: .
+    env_file:
+        - .env
     ports:
-        - "8001:8001"
-        - "8002:8002"
+        - "${HOST_OUTSIDE_PORT}:${CONTAINER_OUTSIDE_PORT}"
+        - "${HOST_INSIDE_PORT}:${CONTAINER_INSIDE_PORT}"
+    command: "-outside=${CONTAINER_OUTSIDE_PORT} -inside=${CONTAINER_INSIDE_PORT}"
     volumes:
         - ".:/go/src/github.com/notomo/wsxhub"
