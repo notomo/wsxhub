@@ -16,15 +16,17 @@ type Server struct {
 	outsideJoined  chan *Client
 	outsideLeft    chan *Client
 	outsideMessage chan string
+	outsidePort    string
 	insideClients  map[string]*Client
 	insideJoined   chan *Client
 	insideLeft     chan *Client
 	insideMessage  chan string
+	insidePort     string
 	done           chan bool
 }
 
 // NewServer creates a server
-func NewServer() *Server {
+func NewServer(outsidePort string, insidePort string) *Server {
 	outsideClients := make(map[string]*Client)
 	outsideJoined := make(chan *Client)
 	outsideLeft := make(chan *Client)
@@ -39,10 +41,12 @@ func NewServer() *Server {
 		outsideJoined,
 		outsideLeft,
 		outsideMessage,
+		outsidePort,
 		insideClients,
 		insideJoined,
 		insideLeft,
 		insideMessage,
+		insidePort,
 		done,
 	}
 }
@@ -127,15 +131,15 @@ func (server *Server) Listen() {
 		server.done <- true
 	}))
 
-	outsideServer := &http.Server{Addr: ":8001", Handler: outsideWsMux}
+	outsideServer := &http.Server{Addr: ":" + server.outsidePort, Handler: outsideWsMux}
 	go func() {
-		log.Info("Start outside server")
+		log.Info("Start outside server on :" + server.outsidePort)
 		outsideServer.ListenAndServe()
 	}()
 
-	insideServer := &http.Server{Addr: ":8002", Handler: insideWsMux}
+	insideServer := &http.Server{Addr: ":" + server.insidePort, Handler: insideWsMux}
 	go func() {
-		log.Info("Start inside server")
+		log.Info("Start inside server on :" + server.insidePort)
 		insideServer.ListenAndServe()
 	}()
 
