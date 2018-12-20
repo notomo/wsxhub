@@ -34,6 +34,11 @@ func main() {
 			Usage: "Filter received json",
 			Value: "{}",
 		},
+		cli.StringFlag{
+			Name:  "port, p",
+			Usage: "Set port",
+			Value: "8002",
+		},
 		cli.IntFlag{
 			Name:  "timeout, t",
 			Usage: "Timeout seconds for receiving",
@@ -49,7 +54,7 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c, err := client.NewClientWithID(context.GlobalString("key"))
+				c, err := client.NewClientWithID(context.GlobalString("port"), context.GlobalString("key"))
 				if err != nil {
 					return cli.NewExitError("connection error", 1)
 				}
@@ -80,7 +85,7 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c, err := client.NewClient(context.GlobalString("filter"), context.GlobalString("key"), context.GlobalString("regex"), context.Int("debounce"))
+				c, err := client.NewClient(context.GlobalString("port"), context.GlobalString("filter"), context.GlobalString("key"), context.GlobalString("regex"), context.Int("debounce"))
 				if err != nil {
 					return err
 				}
