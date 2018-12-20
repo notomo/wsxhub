@@ -133,13 +133,13 @@ func (server *Server) Listen() {
 
 	outsideServer := &http.Server{Addr: ":" + server.outsidePort, Handler: outsideWsMux}
 	go func() {
-		log.Info("Start outside server")
+		log.Info("Start outside server on :" + server.outsidePort)
 		outsideServer.ListenAndServe()
 	}()
 
 	insideServer := &http.Server{Addr: ":" + server.insidePort, Handler: insideWsMux}
 	go func() {
-		log.Info("Start inside server")
+		log.Info("Start inside server on :" + server.insidePort)
 		insideServer.ListenAndServe()
 	}()
 
