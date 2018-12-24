@@ -9,10 +9,12 @@ environment:
 stack: go 1.10
 
 before_test:
+    - set PATH=%GOPATH%\bin;%PATH%
     - go get -u github.com/golang/dep/cmd/dep
     - dep ensure
 
 test_script:
+    - echo %PATH%
     - go build -o dist/wsxhub.exe ./cmd/wsxhub 
     - go build -o dist/wsxhubd.exe ./cmd/wsxhubd 
     - go test github.com/notomo/wsxhub/server -race
