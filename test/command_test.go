@@ -13,8 +13,7 @@ import (
 
 const outsidePort = "18881"
 const insidePort = "18882"
-const testKey = "testKey"
-const testValue = "testValue"
+const id = "1"
 
 func TestSend(t *testing.T) {
 	// Server
@@ -33,7 +32,7 @@ func TestSend(t *testing.T) {
 	go receiveAndReply(ws)
 
 	// Inside client
-	cmd := exec.Command("../dist/wsxhub", "-p", insidePort, "--timeout", "5", "send", "--json", "{}")
+	cmd := exec.Command("../dist/wsxhub", "-p", insidePort, "--timeout", "5", "send", "--json", "{}", "--id", id)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)
@@ -48,13 +47,10 @@ func TestSend(t *testing.T) {
 				panic(err)
 			}
 
-			want := testValue
-			got := received[testKey]
+			want := id
+			got := received["id"]
 			if got != want {
 				t.Fatalf("want %v, but %v", want, got)
-			}
-			if _, ok := received["id"]; !ok {
-				t.Fatalf("`received` must have an id.")
 			}
 		}
 	}()
@@ -76,12 +72,7 @@ func receiveAndReply(ws *websocket.Conn) {
 		panic(err)
 	}
 
-	var send map[string]interface{}
-	if err := json.Unmarshal([]byte(msg), &send); err != nil {
-		panic(err)
-	}
-	send[testKey] = testValue
-	err = websocket.JSON.Send(ws, send)
+	err = websocket.Message.Send(ws, msg)
 	if err != nil {
 		panic(err)
 	}

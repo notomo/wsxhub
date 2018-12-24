@@ -13,7 +13,7 @@ func main() {
 
 	app.Name = "wsxhub"
 	app.Usage = "websocket client from stdio"
-	app.Version = "0.0.2"
+	app.Version = "0.0.3"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "debug, d",
@@ -54,7 +54,7 @@ func main() {
 				if context.GlobalBool("debug") {
 					log.SetLevel(log.DebugLevel)
 				}
-				c, err := client.NewClientWithID(context.GlobalString("port"), context.GlobalString("key"))
+				c, err := client.NewClientWithID(context.GlobalString("port"), context.GlobalString("key"), context.String("id"))
 				if err != nil {
 					return cli.NewExitError("connection error", 1)
 				}
@@ -75,6 +75,11 @@ func main() {
 				cli.StringFlag{
 					Name:  "json, j",
 					Usage: "Sent json",
+				},
+				cli.StringFlag{
+					Name:  "id, i",
+					Usage: "Set id",
+					Value: "",
 				},
 			},
 		},
