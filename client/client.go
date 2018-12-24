@@ -30,8 +30,13 @@ func NewClient(port string, filterString string, keyFilterString string, regexFi
 }
 
 // NewClientWithID returns a client with the request id
-func NewClientWithID(port string, keyFilterString string) (*Client, error) {
-	requestID := xid.New().String()
+func NewClientWithID(port string, keyFilterString string, id string) (*Client, error) {
+	var requestID string
+	if id == "" {
+		requestID = xid.New().String()
+	} else {
+		requestID = id
+	}
 	filterString := fmt.Sprintf("{\"id\":\"%s\"}", requestID)
 	return newClient(port, filterString, keyFilterString, "", 0, requestID)
 }
