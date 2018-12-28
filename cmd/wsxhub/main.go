@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/notomo/wsxhub/client"
@@ -13,7 +14,7 @@ func main() {
 
 	app.Name = "wsxhub"
 	app.Usage = "websocket client from stdio"
-	app.Version = "0.0.3"
+	app.Version = "0.0.4"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "debug, d",
@@ -107,6 +108,23 @@ func main() {
 					Name:  "debounce, D",
 					Usage: "Debounce interval(ms)",
 				},
+			},
+		},
+		{
+			Name:  "ping",
+			Usage: "Test request to wsxhubd",
+			Action: func(context *cli.Context) error {
+				if context.GlobalBool("debug") {
+					log.SetLevel(log.DebugLevel)
+				}
+				c, err := client.NewClient(context.GlobalString("port"), "", "", "", 0)
+				if err != nil {
+					return cli.NewExitError("connection error", 1)
+				}
+				defer c.Close()
+				fmt.Println("pong")
+
+				return nil
 			},
 		},
 	}
