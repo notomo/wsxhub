@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +15,13 @@ import (
 const outsidePort = "18881"
 const insidePort = "18882"
 const id = "1"
+
+func TestPingFailure(t *testing.T) {
+	err := exec.Command("../dist/wsxhub", "-p", insidePort, "ping").Wait()
+	if err == nil {
+		t.Fatal("`wsxhub ping` must fail if `wsxhubd` is not executed.")
+	}
+}
 
 func TestSend(t *testing.T) {
 	// Server
@@ -75,5 +83,18 @@ func receiveAndReply(ws *websocket.Conn) {
 	err = websocket.Message.Send(ws, msg)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func TestPing(t *testing.T) {
+	message, err := exec.Command("../dist/wsxhub", "-p", insidePort, "ping").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := "pong"
+	got := strings.TrimSpace(string(message))
+	if got != want {
+		t.Fatalf("want %v, but %v", want, got)
 	}
 }
