@@ -7,8 +7,8 @@ type WebsocketClientFactory interface {
 
 // WebsocketClient :
 type WebsocketClient interface {
-	Send() error
-	ReceiveOnce() (string, error)
-	Receive(func(string) error) error
+	Send(string) error
+	ReceiveOnce(int) (string, error)
+	Receive(int, func(string) error) error
 	Close() error
 }

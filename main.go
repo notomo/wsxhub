@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/notomo/wsxhub/internal/command"
+	"github.com/notomo/wsxhub/internal/impl"
 	"github.com/urfave/cli"
 )
 
@@ -50,9 +51,17 @@ func main() {
 			Name:  "send",
 			Usage: "Send a request and wait result",
 			Action: func(context *cli.Context) error {
-				cmd := command.SendCommand{}
+				factory := &impl.WebsocketClientFactoryImpl{
+					Port: context.GlobalString("port"),
+				}
+				cmd := command.SendCommand{
+					WebsocketClientFactory: factory,
+					OutputWriter:           os.Stdout,
+					Timeout:                context.GlobalInt("timeout"),
+					Message:                context.String("json"),
+				}
 				if err := cmd.Run(); err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 				return nil
 			},
@@ -72,9 +81,16 @@ func main() {
 			Name:  "receive",
 			Usage: "Wait receiving requests",
 			Action: func(context *cli.Context) error {
-				cmd := command.ReceiveCommand{}
+				factory := &impl.WebsocketClientFactoryImpl{
+					Port: context.GlobalString("port"),
+				}
+				cmd := command.ReceiveCommand{
+					WebsocketClientFactory: factory,
+					OutputWriter:           os.Stdout,
+					Timeout:                context.GlobalInt("timeout"),
+				}
 				if err := cmd.Run(); err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 				return nil
 			},
@@ -89,9 +105,15 @@ func main() {
 			Name:  "ping",
 			Usage: "Test request to wsxhubd",
 			Action: func(context *cli.Context) error {
-				cmd := command.PingCommand{}
+				factory := &impl.WebsocketClientFactoryImpl{
+					Port: context.GlobalString("port"),
+				}
+				cmd := command.PingCommand{
+					WebsocketClientFactory: factory,
+					OutputWriter:           os.Stdout,
+				}
 				if err := cmd.Run(); err != nil {
-					return err
+					return cli.NewExitError(err, 1)
 				}
 				return nil
 			},

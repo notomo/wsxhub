@@ -10,6 +10,7 @@ import (
 type ReceiveCommand struct {
 	WebsocketClientFactory domain.WebsocketClientFactory
 	OutputWriter           io.Writer
+	Timeout                int
 }
 
 // Run :
@@ -20,7 +21,7 @@ func (cmd *ReceiveCommand) Run() error {
 	}
 	defer client.Close()
 
-	if err := client.Receive(func(message string) error {
+	if err := client.Receive(cmd.Timeout, func(message string) error {
 		if _, err := cmd.OutputWriter.Write([]byte(message)); err != nil {
 			return err
 		}
