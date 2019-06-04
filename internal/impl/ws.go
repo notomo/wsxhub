@@ -62,7 +62,15 @@ func (client *WebsocketClientImpl) ReceiveOnce(timeout int) (string, error) {
 
 // Receive :
 func (client *WebsocketClientImpl) Receive(timeout int, callback func(string) error) error {
-	return nil
+	for {
+		message, err := client.ReceiveOnce(timeout)
+		if err != nil {
+			return err
+		}
+		if err := callback(message); err != nil {
+			return err
+		}
+	}
 }
 
 // Close :
