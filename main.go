@@ -129,6 +129,7 @@ func main() {
 					Received: make(chan string),
 					Left:     make(chan domain.Connection),
 					Done:     make(chan bool),
+					Conns:    make(map[string]domain.Connection),
 				}
 				insideWorker := &impl.WorkerImpl{
 					Name:     "inside",
@@ -136,6 +137,7 @@ func main() {
 					Received: make(chan string),
 					Left:     make(chan domain.Connection),
 					Done:     make(chan bool),
+					Conns:    make(map[string]domain.Connection),
 				}
 				cmd := command.ServerCommand{
 					OutputWriter: os.Stdout,

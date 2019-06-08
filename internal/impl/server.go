@@ -43,7 +43,6 @@ func (factory *ServerFactoryImpl) Server(
 
 	return &ServerImpl{
 		httpServer: server,
-		conns:      make(map[string]domain.Connection),
 		worker:     factory.Worker,
 	}, nil
 }
@@ -51,25 +50,7 @@ func (factory *ServerFactoryImpl) Server(
 // ServerImpl :
 type ServerImpl struct {
 	httpServer *http.Server
-	conns      map[string]domain.Connection
 	worker     domain.Worker
-}
-
-// Connections :
-func (server *ServerImpl) Connections() map[string]domain.Connection {
-	return server.conns
-}
-
-// Add :
-func (server *ServerImpl) Add(conn domain.Connection) error {
-	server.conns[conn.ID()] = conn
-	return nil
-}
-
-// Delete :
-func (server *ServerImpl) Delete(conn domain.Connection) error {
-	delete(server.conns, conn.ID())
-	return nil
 }
 
 // Start :
@@ -80,5 +61,5 @@ func (server *ServerImpl) Start(
 		server.httpServer.ListenAndServe()
 	}()
 
-	return server.worker.Run(server, send)
+	return server.worker.Run(send)
 }

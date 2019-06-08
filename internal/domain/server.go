@@ -8,9 +8,6 @@ type ServerFactory interface {
 // Server :
 type Server interface {
 	Start(func(map[string]Connection, string) error) error
-	Add(Connection) error
-	Delete(Connection) error
-	Connections() map[string]Connection
 }
 
 // Route :

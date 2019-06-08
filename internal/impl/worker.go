@@ -13,27 +13,27 @@ type WorkerImpl struct {
 	Received chan string
 	Left     chan domain.Connection
 	Done     chan bool
+	Conns    map[string]domain.Connection
 }
 
 // Run :
 func (worker *WorkerImpl) Run(
-	server domain.Server,
 	send func(map[string]domain.Connection, string) error,
 ) error {
 	for {
 		select {
 
 		case conn := <-worker.Joined:
-			server.Add(conn)
-			log.Printf("(%s) joined: %s, count: %d", worker.Name, conn.ID(), len(server.Connections()))
+			worker.Conns[conn.ID()] = conn
+			log.Printf("(%s) joined: %s, count: %d", worker.Name, conn.ID(), len(worker.Conns))
 
 		case conn := <-worker.Left:
-			server.Delete(conn)
-			log.Printf("(%s) left: %s, count: %d", worker.Name, conn.ID(), len(server.Connections()))
+			delete(worker.Conns, conn.ID())
+			log.Printf("(%s) left: %s, count: %d", worker.Name, conn.ID(), len(worker.Conns))
 
 		case message := <-worker.Received:
 			log.Printf("(%s) received", worker.Name)
-			if err := send(server.Connections(), message); err != nil {
+			if err := send(worker.Conns, message); err != nil {
 				log.Printf("(%s) failed to send: %s", worker.Name, err)
 			}
 
