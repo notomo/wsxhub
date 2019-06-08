@@ -1,9 +1,6 @@
 
 test:
-	go build -o dist/wsxhub ./cmd/wsxhub 
-	go build -o dist/wsxhubd ./cmd/wsxhubd 
-	go test github.com/notomo/wsxhub/server -race
-	go test github.com/notomo/wsxhub/test
+	go build -o dist/wsxhub ./main.go
 
 install:
 	go install github.com/notomo/wsxhub/cmd/wsxhub

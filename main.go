@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/notomo/wsxhub/internal/command"
+	"github.com/notomo/wsxhub/internal/domain"
 	"github.com/notomo/wsxhub/internal/impl"
 	"github.com/urfave/cli"
 )
@@ -116,6 +117,55 @@ func main() {
 					return cli.NewExitError(err, 1)
 				}
 				return nil
+			},
+		},
+		{
+			Name:  "server",
+			Usage: "Start server",
+			Action: func(context *cli.Context) error {
+				outsideWorker := &impl.WorkerImpl{
+					Name:     "outside",
+					Joined:   make(chan domain.Connection),
+					Received: make(chan string),
+					Left:     make(chan domain.Connection),
+					Done:     make(chan bool),
+				}
+				insideWorker := &impl.WorkerImpl{
+					Name:     "inside",
+					Joined:   make(chan domain.Connection),
+					Received: make(chan string),
+					Left:     make(chan domain.Connection),
+					Done:     make(chan bool),
+				}
+				cmd := command.ServerCommand{
+					OutputWriter: os.Stdout,
+					OutsideServerFactory: &impl.ServerFactoryImpl{
+						Port:         context.String("outside"),
+						Worker:       outsideWorker,
+						TargetWorker: insideWorker,
+					},
+					InsideServerFactory: &impl.ServerFactoryImpl{
+						Port:         context.String("inside"),
+						Worker:       insideWorker,
+						TargetWorker: outsideWorker,
+					},
+				}
+				if err := cmd.Run(); err != nil {
+					return cli.NewExitError(err, 1)
+				}
+				return nil
+			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "outside",
+					Usage: "port for outside",
+					Value: "8001",
+				},
+				cli.StringFlag{
+					Name:  "inside",
+					Usage: "port for inside",
+					Value: "8002",
+				},
 			},
 		},
 	}
