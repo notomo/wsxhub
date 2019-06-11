@@ -59,23 +59,14 @@ func main() {
 					WebsocketClientFactory: factory,
 					OutputWriter:           os.Stdout,
 					Timeout:                context.GlobalInt("timeout"),
-					Message:                context.String("json"),
+					MessageFactory: &impl.MessageFactoryImpl{
+						InputReader: os.Stdin,
+					},
 				}
 				if err := cmd.Run(); err != nil {
 					return cli.NewExitError(err, 1)
 				}
 				return nil
-			},
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "json",
-					Usage: "Sent json",
-				},
-				cli.StringFlag{
-					Name:  "id",
-					Usage: "Set id",
-					Value: "",
-				},
 			},
 		},
 		{

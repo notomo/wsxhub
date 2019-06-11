@@ -10,7 +10,7 @@ import (
 type SendCommand struct {
 	WebsocketClientFactory domain.WebsocketClientFactory
 	OutputWriter           io.Writer
-	Message                string
+	MessageFactory         domain.MessageFactory
 	Timeout                int
 }
 
@@ -22,16 +22,21 @@ func (cmd *SendCommand) Run() error {
 	}
 	defer client.Close()
 
-	if err := client.Send(cmd.Message); err != nil {
-		return err
-	}
-
-	message, err := client.ReceiveOnce(cmd.Timeout)
+	message, err := cmd.MessageFactory.Message()
 	if err != nil {
 		return err
 	}
 
-	if _, err := cmd.OutputWriter.Write([]byte(message)); err != nil {
+	if err := client.Send(message); err != nil {
+		return err
+	}
+
+	received, err := client.ReceiveOnce(cmd.Timeout)
+	if err != nil {
+		return err
+	}
+
+	if _, err := cmd.OutputWriter.Write([]byte(received)); err != nil {
 		return err
 	}
 

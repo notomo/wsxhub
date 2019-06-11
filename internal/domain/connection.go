@@ -2,8 +2,8 @@ package domain
 
 // Connection :
 type Connection interface {
-	Close() error
-	Listen() error
 	ID() string
+	Listen() error
 	Send(string) error
+	Close() error
 }
