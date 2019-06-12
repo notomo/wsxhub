@@ -24,11 +24,12 @@ func (factory *ServerFactoryImpl) Server(
 	for _, route := range routes {
 		mux.Handle(route.Path, websocket.Handler(func(ws *websocket.Conn) {
 			conn := &ConnectionImpl{
-				ws:           ws,
+				websocketClient: &WebsocketClientImpl{
+					ws: ws,
+				},
 				worker:       factory.Worker,
 				targetWorker: factory.TargetWorker,
 				id:           xid.New().String(),
-				done:         make(chan bool),
 			}
 			if err := route.Handler(conn); err != nil {
 				log.Print(err)

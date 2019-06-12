@@ -3,6 +3,7 @@ package command
 import (
 	"io"
 
+	"github.com/notomo/wsxhub/internal"
 	"github.com/notomo/wsxhub/internal/domain"
 )
 
@@ -32,7 +33,7 @@ func (cmd *SendCommand) Run() error {
 	}
 
 	received, err := client.ReceiveOnce(cmd.Timeout)
-	if err != nil {
+	if err != nil && err != internal.ErrEOF {
 		return err
 	}
 

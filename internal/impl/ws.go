@@ -52,7 +52,7 @@ func (client *WebsocketClientImpl) ReceiveOnce(timeout int) (string, error) {
 		if operr, ok := err.(*net.OpError); ok && operr.Timeout() {
 			return "", internal.ErrTimeout
 		} else if err == io.EOF {
-			return "", nil
+			return "", internal.ErrEOF
 		}
 		return "", err
 	}
@@ -64,6 +64,9 @@ func (client *WebsocketClientImpl) ReceiveOnce(timeout int) (string, error) {
 func (client *WebsocketClientImpl) Receive(timeout int, callback func(string) error) error {
 	for {
 		message, err := client.ReceiveOnce(timeout)
+		if err == internal.ErrEOF {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
