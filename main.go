@@ -138,7 +138,7 @@ func main() {
 						TargetWorker: insideWorker,
 					},
 					InsideServerFactory: &impl.ServerFactoryImpl{
-						Port:         context.String("inside"),
+						Port:         context.GlobalString("port"),
 						Worker:       insideWorker,
 						TargetWorker: outsideWorker,
 					},
@@ -153,11 +153,6 @@ func main() {
 					Name:  "outside",
 					Usage: "port for outside",
 					Value: "8001",
-				},
-				cli.StringFlag{
-					Name:  "inside",
-					Usage: "port for inside",
-					Value: "8002",
 				},
 			},
 		},
