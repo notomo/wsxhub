@@ -17,9 +17,7 @@ type WorkerImpl struct {
 }
 
 // Run :
-func (worker *WorkerImpl) Run(
-	send func(map[string]domain.Connection, string) error,
-) error {
+func (worker *WorkerImpl) Run() error {
 	for {
 		select {
 
@@ -33,8 +31,10 @@ func (worker *WorkerImpl) Run(
 
 		case message := <-worker.Received:
 			log.Printf("(%s) received", worker.Name)
-			if err := send(worker.Conns, message); err != nil {
-				log.Printf("(%s) failed to send: %s", worker.Name, err)
+			for _, conn := range worker.Conns {
+				if err := conn.Send(message); err != nil {
+					log.Printf("(%s) failed to send: %s", worker.Name, err)
+				}
 			}
 
 		case <-worker.Done:

@@ -41,25 +41,7 @@ func (cmd *ServerCommand) Run() error {
 		return err
 	}
 
-	go insideServer.Start(
-		func(conns map[string]domain.Connection, msg string) error {
-			for _, conn := range conns {
-				if err := conn.Send(msg); err != nil {
-					return err
-				}
-			}
-			return nil
-		},
-	)
+	go insideServer.Start()
 
-	return outsideServer.Start(
-		func(conns map[string]domain.Connection, msg string) error {
-			for _, conn := range conns {
-				if err := conn.Send(msg); err != nil {
-					return err
-				}
-			}
-			return nil
-		},
-	)
+	return outsideServer.Start()
 }

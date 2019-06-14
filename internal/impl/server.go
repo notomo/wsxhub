@@ -55,12 +55,10 @@ type ServerImpl struct {
 }
 
 // Start :
-func (server *ServerImpl) Start(
-	send func(map[string]domain.Connection, string) error,
-) error {
+func (server *ServerImpl) Start() error {
 	go func() {
 		server.httpServer.ListenAndServe()
 	}()
 
-	return server.worker.Run(send)
+	return server.worker.Run()
 }
