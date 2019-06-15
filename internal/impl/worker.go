@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"io"
 	"log"
 
 	"github.com/notomo/wsxhub/internal/domain"
@@ -8,16 +9,19 @@ import (
 
 // WorkerImpl :
 type WorkerImpl struct {
-	Name     string
-	Joined   chan domain.Connection
-	Received chan string
-	Left     chan domain.Connection
-	Done     chan bool
-	Conns    map[string]domain.Connection
+	Name         string
+	Joined       chan domain.Connection
+	Received     chan string
+	Left         chan domain.Connection
+	Done         chan bool
+	Conns        map[string]domain.Connection
+	OutputWriter io.Writer
 }
 
 // Run :
 func (worker *WorkerImpl) Run() error {
+	log.SetOutput(worker.OutputWriter)
+
 	for {
 		select {
 

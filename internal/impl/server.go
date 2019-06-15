@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"io"
 	"log"
 	"net/http"
 
@@ -14,12 +15,15 @@ type ServerFactoryImpl struct {
 	Port         string
 	Worker       domain.Worker
 	TargetWorker domain.Worker
+	OutputWriter io.Writer
 }
 
 // Server :
 func (factory *ServerFactoryImpl) Server(
 	routes ...domain.Route,
 ) (domain.Server, error) {
+	log.SetOutput(factory.OutputWriter)
+
 	mux := http.NewServeMux()
 	for _, route := range routes {
 		mux.Handle(route.Path, websocket.Handler(func(ws *websocket.Conn) {

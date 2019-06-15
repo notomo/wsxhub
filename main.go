@@ -115,20 +115,22 @@ func main() {
 			Usage: "Start server",
 			Action: func(context *cli.Context) error {
 				outsideWorker := &impl.WorkerImpl{
-					Name:     "outside",
-					Joined:   make(chan domain.Connection),
-					Received: make(chan string),
-					Left:     make(chan domain.Connection),
-					Done:     make(chan bool),
-					Conns:    make(map[string]domain.Connection),
+					Name:         "outside",
+					Joined:       make(chan domain.Connection),
+					Received:     make(chan string),
+					Left:         make(chan domain.Connection),
+					Done:         make(chan bool),
+					Conns:        make(map[string]domain.Connection),
+					OutputWriter: os.Stdout,
 				}
 				insideWorker := &impl.WorkerImpl{
-					Name:     "inside",
-					Joined:   make(chan domain.Connection),
-					Received: make(chan string),
-					Left:     make(chan domain.Connection),
-					Done:     make(chan bool),
-					Conns:    make(map[string]domain.Connection),
+					Name:         "inside",
+					Joined:       make(chan domain.Connection),
+					Received:     make(chan string),
+					Left:         make(chan domain.Connection),
+					Done:         make(chan bool),
+					Conns:        make(map[string]domain.Connection),
+					OutputWriter: os.Stdout,
 				}
 				cmd := command.ServerCommand{
 					OutputWriter: os.Stdout,
@@ -136,11 +138,13 @@ func main() {
 						Port:         context.String("outside"),
 						Worker:       outsideWorker,
 						TargetWorker: insideWorker,
+						OutputWriter: os.Stdout,
 					},
 					InsideServerFactory: &impl.ServerFactoryImpl{
 						Port:         context.GlobalString("port"),
 						Worker:       insideWorker,
 						TargetWorker: outsideWorker,
+						OutputWriter: os.Stdout,
 					},
 				}
 				if err := cmd.Run(); err != nil {
