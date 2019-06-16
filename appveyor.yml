@@ -16,4 +16,4 @@ before_test:
 test_script:
     - echo %PATH%
     - go build -o dist/wsxhub.exe
-    - go test github.com/notomo/wsxhub/... -race
+    - go test github.com/notomo/wsxhub/...
