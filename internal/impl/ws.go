@@ -14,12 +14,13 @@ import (
 
 // WebsocketClientFactoryImpl :
 type WebsocketClientFactoryImpl struct {
-	Port string
+	Port         string
+	FilterSource string
 }
 
 // Client :
 func (factory *WebsocketClientFactoryImpl) Client() (domain.WebsocketClient, error) {
-	params := url.Values{}
+	params := url.Values{"filter": {factory.FilterSource}}
 	u := fmt.Sprintf("ws://localhost:%s/?%s", factory.Port, params.Encode())
 	ws, err := websocket.Dial(u, "", "http://localhost/")
 	if err != nil {

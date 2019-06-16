@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"encoding/json"
 	"io"
 	"log"
 
@@ -35,10 +36,22 @@ func (worker *WorkerImpl) Run() error {
 
 		case message := <-worker.Received:
 			log.Printf("(%s) received", worker.Name)
+
+			var targetMap map[string]interface{}
+			if err := json.Unmarshal([]byte(message), &targetMap); err != nil {
+				log.Printf("(%s) failed to unmarshal message: %s", worker.Name, err)
+				break
+			}
+
 			for _, conn := range worker.Conns {
+				if !conn.IsTarget(targetMap) {
+					log.Printf("(%s) skipped", worker.Name)
+					continue
+				}
 				if err := conn.Send(message); err != nil {
 					log.Printf("(%s) failed to send: %s", worker.Name, err)
 				}
+				log.Printf("(%s) sent", worker.Name)
 			}
 
 		case <-worker.Done:

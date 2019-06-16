@@ -6,4 +6,5 @@ type Connection interface {
 	Listen() error
 	Send(string) error
 	Close() error
+	IsTarget(map[string]interface{}) bool
 }

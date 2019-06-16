@@ -10,6 +10,7 @@ type ConnectionImpl struct {
 	worker          domain.Worker
 	targetWorker    domain.Worker
 	id              string
+	filterClause    domain.FilterClause
 }
 
 // ID :
@@ -38,4 +39,9 @@ func (conn *ConnectionImpl) Listen() error {
 // Send :
 func (conn *ConnectionImpl) Send(message string) error {
 	return conn.websocketClient.Send(message)
+}
+
+// IsTarget :
+func (conn *ConnectionImpl) IsTarget(targetMap map[string]interface{}) bool {
+	return conn.filterClause.Match(targetMap)
 }

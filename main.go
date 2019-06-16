@@ -16,25 +16,6 @@ func main() {
 	app.Usage = "websocket client from stdio"
 	app.Version = "0.0.5"
 	app.Flags = []cli.Flag{
-		cli.BoolFlag{
-			Name:  "debug",
-			Usage: "Show debug messages",
-		},
-		cli.StringFlag{
-			Name:  "regex",
-			Usage: "Filter received json value by regular expression",
-			Value: "{}",
-		},
-		cli.StringFlag{
-			Name:  "key",
-			Usage: "Filter received json key",
-			Value: "{}",
-		},
-		cli.StringFlag{
-			Name:  "filter",
-			Usage: "Filter received json",
-			Value: "{}",
-		},
 		cli.StringFlag{
 			Name:  "port",
 			Usage: "Set port",
@@ -52,13 +33,13 @@ func main() {
 			Name:  "send",
 			Usage: "Send a request and wait result",
 			Action: func(context *cli.Context) error {
-				factory := &impl.WebsocketClientFactoryImpl{
-					Port: context.GlobalString("port"),
-				}
 				cmd := command.SendCommand{
-					WebsocketClientFactory: factory,
-					OutputWriter:           os.Stdout,
-					Timeout:                context.GlobalInt("timeout"),
+					WebsocketClientFactory: &impl.WebsocketClientFactoryImpl{
+						Port:         context.GlobalString("port"),
+						FilterSource: context.String("filter"),
+					},
+					OutputWriter: os.Stdout,
+					Timeout:      context.GlobalInt("timeout"),
 					MessageFactory: &impl.MessageFactoryImpl{
 						InputReader: os.Stdin,
 					},
@@ -68,13 +49,20 @@ func main() {
 				}
 				return nil
 			},
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "filter",
+					Usage: "Filter received json",
+				},
+			},
 		},
 		{
 			Name:  "receive",
 			Usage: "Wait receiving requests",
 			Action: func(context *cli.Context) error {
 				factory := &impl.WebsocketClientFactoryImpl{
-					Port: context.GlobalString("port"),
+					Port:         context.GlobalString("port"),
+					FilterSource: context.String("filter"),
 				}
 				cmd := command.ReceiveCommand{
 					WebsocketClientFactory: factory,
@@ -90,6 +78,10 @@ func main() {
 				cli.IntFlag{
 					Name:  "debounce",
 					Usage: "Debounce interval(ms)",
+				},
+				cli.StringFlag{
+					Name:  "filter",
+					Usage: "Filter received json",
 				},
 			},
 		},
@@ -132,19 +124,22 @@ func main() {
 					Conns:        make(map[string]domain.Connection),
 					OutputWriter: os.Stdout,
 				}
+				filterClauseFactory := &impl.FilterClauseFactoryImpl{}
 				cmd := command.ServerCommand{
 					OutputWriter: os.Stdout,
 					OutsideServerFactory: &impl.ServerFactoryImpl{
-						Port:         context.String("outside"),
-						Worker:       outsideWorker,
-						TargetWorker: insideWorker,
-						OutputWriter: os.Stdout,
+						Port:                context.String("outside"),
+						Worker:              outsideWorker,
+						TargetWorker:        insideWorker,
+						FilterClauseFactory: filterClauseFactory,
+						OutputWriter:        os.Stdout,
 					},
 					InsideServerFactory: &impl.ServerFactoryImpl{
-						Port:         context.GlobalString("port"),
-						Worker:       insideWorker,
-						TargetWorker: outsideWorker,
-						OutputWriter: os.Stdout,
+						Port:                context.GlobalString("port"),
+						Worker:              insideWorker,
+						TargetWorker:        outsideWorker,
+						FilterClauseFactory: filterClauseFactory,
+						OutputWriter:        os.Stdout,
 					},
 				}
 				if err := cmd.Run(); err != nil {

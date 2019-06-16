@@ -12,10 +12,11 @@ import (
 
 // ServerFactoryImpl :
 type ServerFactoryImpl struct {
-	Port         string
-	Worker       domain.Worker
-	TargetWorker domain.Worker
-	OutputWriter io.Writer
+	Port                string
+	Worker              domain.Worker
+	TargetWorker        domain.Worker
+	FilterClauseFactory domain.FilterClauseFactory
+	OutputWriter        io.Writer
 }
 
 // Server :
@@ -27,6 +28,12 @@ func (factory *ServerFactoryImpl) Server(
 	mux := http.NewServeMux()
 	for _, route := range routes {
 		mux.Handle(route.Path, websocket.Handler(func(ws *websocket.Conn) {
+			filterClause, err := factory.FilterClauseFactory.FilterClause(ws.Request().FormValue("filter"))
+			if err != nil {
+				log.Printf("failed to create filterClause: %s", err)
+				return
+			}
+
 			conn := &ConnectionImpl{
 				websocketClient: &WebsocketClientImpl{
 					ws: ws,
@@ -34,7 +41,9 @@ func (factory *ServerFactoryImpl) Server(
 				worker:       factory.Worker,
 				targetWorker: factory.TargetWorker,
 				id:           xid.New().String(),
+				filterClause: filterClause,
 			}
+
 			if err := route.Handler(conn); err != nil {
 				log.Print(err)
 			}
