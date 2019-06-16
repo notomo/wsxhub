@@ -2,6 +2,9 @@ package impl
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"regexp"
 
 	"github.com/notomo/wsxhub/internal/domain"
 )
@@ -21,7 +24,56 @@ func (factory *FilterClauseFactoryImpl) FilterClause(source string) (domain.Filt
 		return nil, err
 	}
 
+	if err := filterClause.OperatorType.Validate(); err != nil {
+		return nil, err
+	}
+
+	for i, filter := range filterClause.Filters {
+		filter := filter
+		if err := filter.MatchType.Validate(); err != nil {
+			return nil, err
+		}
+
+		if filter.MatchType != domain.MatchTypeRegexp {
+			continue
+		}
+		regexpMap, err := toRegexpMap(filter.Map)
+		if err != nil {
+			return nil, err
+		}
+		filterClause.Filters[i].Map = regexpMap
+	}
+
 	return &filterClause, nil
+}
+
+func toRegexpMap(filterMap map[string]interface{}) (map[string]interface{}, error) {
+	regexpMap := map[string]interface{}{}
+	for key, value := range filterMap {
+		nestMap, nested := value.(map[string]interface{})
+		if nested {
+			compiledMap, err := toRegexpMap(nestMap)
+			if err != nil {
+				return nil, err
+			}
+			regexpMap[key] = compiledMap
+			continue
+		}
+
+		pattern, ok := value.(string)
+		if !ok {
+			msg := fmt.Sprintf("regexp filter values must be string, but actual: %s", value)
+			return nil, errors.New(msg)
+		}
+
+		compiled, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, err
+		}
+		regexpMap[key] = compiled
+	}
+
+	return regexpMap, nil
 }
 
 // FilterClauseImpl :
@@ -87,7 +139,38 @@ func (filter *FilterImpl) exactKeyMatch(targetMap map[string]interface{}) bool {
 }
 
 func (filter *FilterImpl) regexpMatch(targetMap map[string]interface{}) bool {
-	return false
+	return regexpMatch(filter.Map, targetMap)
+}
+
+func regexpMatch(filterMap map[string]interface{}, targetMap map[string]interface{}) bool {
+	for key, value := range filterMap {
+		targetValue, ok := targetMap[key]
+		if !ok {
+			return false
+		}
+
+		nestMap, nested := value.(map[string]interface{})
+		nestTargetMap, nestedTarget := targetValue.(map[string]interface{})
+		if nested != nestedTarget {
+			return false
+		}
+
+		if !nested {
+			regexp := value.(*regexp.Regexp)
+			targetString, ok := targetValue.(string)
+			if !ok {
+				return false
+			}
+			if !regexp.MatchString(targetString) {
+				return false
+			}
+			continue
+		}
+		if nested && !regexpMatch(nestMap, nestTargetMap) {
+			return false
+		}
+	}
+	return true
 }
 
 func isSubsetKey(filterMap map[string]interface{}, targetMap map[string]interface{}) bool {
