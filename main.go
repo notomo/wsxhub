@@ -21,11 +21,6 @@ func main() {
 			Usage: "Set port",
 			Value: "8002",
 		},
-		cli.IntFlag{
-			Name:  "timeout",
-			Usage: "Timeout seconds for receiving",
-			Value: 0,
-		},
 	}
 
 	app.Commands = []cli.Command{
@@ -39,7 +34,7 @@ func main() {
 						FilterSource: context.String("filter"),
 					},
 					OutputWriter: os.Stdout,
-					Timeout:      context.GlobalInt("timeout"),
+					Timeout:      context.Int("timeout"),
 					MessageFactory: &impl.MessageFactoryImpl{
 						InputReader: os.Stdin,
 					},
@@ -54,6 +49,11 @@ func main() {
 					Name:  "filter",
 					Usage: "Filter received json",
 				},
+				cli.IntFlag{
+					Name:  "timeout",
+					Usage: "Timeout seconds for receiving",
+					Value: 0,
+				},
 			},
 		},
 		{
@@ -67,7 +67,7 @@ func main() {
 				cmd := command.ReceiveCommand{
 					WebsocketClientFactory: factory,
 					OutputWriter:           os.Stdout,
-					Timeout:                context.GlobalInt("timeout"),
+					Timeout:                context.Int("timeout"),
 				}
 				if err := cmd.Run(); err != nil {
 					return cli.NewExitError(err, 1)
@@ -82,6 +82,11 @@ func main() {
 				cli.StringFlag{
 					Name:  "filter",
 					Usage: "Filter received json",
+				},
+				cli.IntFlag{
+					Name:  "timeout",
+					Usage: "Timeout seconds for receiving",
+					Value: 0,
 				},
 			},
 		},
