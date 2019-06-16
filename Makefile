@@ -1,10 +1,10 @@
 
 test:
 	go build -o dist/wsxhub ./main.go
+	go test -v github.com/notomo/wsxhub/... -race
 
 install:
-	go install github.com/notomo/wsxhub/cmd/wsxhub
-	go install github.com/notomo/wsxhub/cmd/wsxhubd
+	go install github.com/notomo/wsxhub
 
 reup:
 	docker-compose down

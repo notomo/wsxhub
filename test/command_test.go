@@ -17,7 +17,7 @@ const insidePort = "18882"
 const id = "1"
 
 func TestPingFailure(t *testing.T) {
-	err := exec.Command("../dist/wsxhub", "-p", insidePort, "ping").Wait()
+	err := exec.Command("../dist/wsxhub", "--port", insidePort, "ping").Wait()
 	if err == nil {
 		t.Fatal("`wsxhub ping` must fail if `wsxhubd` is not executed.")
 	}
@@ -25,7 +25,7 @@ func TestPingFailure(t *testing.T) {
 
 func TestSend(t *testing.T) {
 	// Server
-	err := exec.Command("../dist/wsxhubd", "-outside", outsidePort, "-inside", insidePort).Start()
+	err := exec.Command("../dist/wsxhub", "--port", insidePort, "server", "--outside", outsidePort).Start()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,11 +40,16 @@ func TestSend(t *testing.T) {
 	go receiveAndReply(ws)
 
 	// Inside client
-	cmd := exec.Command("../dist/wsxhub", "-p", insidePort, "--timeout", "5", "send", "--json", "{}", "--id", id)
+	cmd := exec.Command("../dist/wsxhub", "--port", insidePort, "send", "--timeout", "5")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)
 	}
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	go func() {
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
@@ -66,6 +71,13 @@ func TestSend(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	msg := fmt.Sprintf(`{"id":"%s"}`, id)
+	if _, err := stdin.Write([]byte(msg)); err != nil {
+		t.Fatal(err)
+	}
+	stdin.Close()
+
 	err = cmd.Wait()
 	if err != nil {
 		t.Fatal(err)
@@ -87,7 +99,7 @@ func receiveAndReply(ws *websocket.Conn) {
 }
 
 func TestPing(t *testing.T) {
-	message, err := exec.Command("../dist/wsxhub", "-p", insidePort, "ping").Output()
+	message, err := exec.Command("../dist/wsxhub", "--port", insidePort, "ping").Output()
 	if err != nil {
 		t.Fatal(err)
 	}

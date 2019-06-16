@@ -1,2 +1,2 @@
 dep ensure
-go run ./cmd/wsxhubd/main.go $*
+go run main.go $*

@@ -6,6 +6,6 @@ app:
     ports:
         - "${HOST_OUTSIDE_PORT}:${CONTAINER_OUTSIDE_PORT}"
         - "${HOST_INSIDE_PORT}:${CONTAINER_INSIDE_PORT}"
-    command: "-outside=${CONTAINER_OUTSIDE_PORT} -inside=${CONTAINER_INSIDE_PORT}"
+    command: "--port=${CONTAINER_INSIDE_PORT} server --outside=${CONTAINER_OUTSIDE_PORT}"
     volumes:
         - ".:/go/src/github.com/notomo/wsxhub"
