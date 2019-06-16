@@ -23,6 +23,7 @@ type WorkerImpl struct {
 func (worker *WorkerImpl) Run() error {
 	log.SetOutput(worker.OutputWriter)
 
+	log.Printf("(%s) start", worker.Name)
 	for {
 		select {
 

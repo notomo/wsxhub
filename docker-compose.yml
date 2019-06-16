@@ -6,6 +6,7 @@ app:
     ports:
         - "${HOST_OUTSIDE_PORT}:${CONTAINER_OUTSIDE_PORT}"
         - "${HOST_INSIDE_PORT}:${CONTAINER_INSIDE_PORT}"
-    command: "--port=${CONTAINER_INSIDE_PORT} server --outside=${CONTAINER_OUTSIDE_PORT}"
+    entrypoint: "go run main.go --port=${CONTAINER_INSIDE_PORT} server --outside=${CONTAINER_OUTSIDE_PORT}"
     volumes:
-        - ".:/go/src/github.com/notomo/wsxhub"
+        - ".:/src"
+    working_dir: /src

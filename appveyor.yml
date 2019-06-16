@@ -6,12 +6,10 @@ clone_folder: c:\gopath\src\github.com\notomo\wsxhub
 environment:
     GOPATH: c:\gopath
 
-stack: go 1.10
+stack: go 1.12
 
 before_test:
     - set PATH=%GOPATH%\bin;%PATH%
-    - go get -u github.com/golang/dep/cmd/dep
-    - dep ensure
 
 test_script:
     - echo %PATH%
