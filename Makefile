@@ -10,6 +10,9 @@ reup:
 	docker-compose down
 	docker-compose up -d
 
+start:
+	go run main.go server
+
 v=
 deploy:
 	git tag v${v}
@@ -18,4 +21,5 @@ deploy:
 .PHONY: test
 .PHONY: install
 .PHONY: reup
+.PHONY: start
 .PHONY: deploy
