@@ -83,11 +83,29 @@ func (filter *FilterImpl) exactMatch(targetMap map[string]interface{}) bool {
 }
 
 func (filter *FilterImpl) exactKeyMatch(targetMap map[string]interface{}) bool {
-	return false
+	return isSubsetKey(filter.Map, targetMap) && isSubsetKey(targetMap, filter.Map)
 }
 
 func (filter *FilterImpl) regexpMatch(targetMap map[string]interface{}) bool {
 	return false
+}
+
+func isSubsetKey(filterMap map[string]interface{}, targetMap map[string]interface{}) bool {
+	for key, value := range filterMap {
+		targetValue, ok := targetMap[key]
+		if !ok {
+			return false
+		}
+		nestMap, nested := value.(map[string]interface{})
+		nestTargetMap, nestedTarget := targetValue.(map[string]interface{})
+		if nested != nestedTarget {
+			return false
+		}
+		if nested && !isSubset(nestMap, nestTargetMap) {
+			return false
+		}
+	}
+	return true
 }
 
 func isSubset(filterMap map[string]interface{}, targetMap map[string]interface{}) bool {

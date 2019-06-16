@@ -57,6 +57,69 @@ func TestExactMatch(t *testing.T) {
 			target: S{"neededKey": S{"nestNeededKey": "nestNeededValue"}},
 			want:   false,
 		},
+		{
+			name:   "no nest filter, slice target",
+			filter: S{"neededKey": "neededValue"},
+			target: S{"neededKey": []string{"neededValue"}},
+			want:   false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			f := FilterImpl{
+				MatchType: domain.MatchTypeExact,
+				Map:       test.filter,
+			}
+
+			got := f.Match(test.target)
+
+			if got != test.want {
+				t.Fatalf("want %v, but %v:", test.want, got)
+			}
+		})
+	}
+}
+
+func TestExactKeyMatch(t *testing.T) {
+	type S = map[string]interface{}
+
+	tests := []struct {
+		name   string
+		target S
+		filter S
+		want   bool
+	}{
+		{
+			name:   "no nest, other key",
+			filter: S{"neededKey": "value"},
+			target: S{"otherKey": "value"},
+			want:   false,
+		},
+		{
+			name:   "no nest, the same key",
+			filter: S{"neededKey": "value"},
+			target: S{"neededKey": "value"},
+			want:   true,
+		},
+		{
+			name:   "nest filter, no nest target",
+			filter: S{"neededKey": S{"nestNeededKey": "value"}},
+			target: S{"neededKey": "value"},
+			want:   false,
+		},
+		{
+			name:   "nest filter, nest target, the same key",
+			filter: S{"neededKey": S{"nestNeededKey": "value"}},
+			target: S{"neededKey": S{"nestNeededKey": "value"}},
+			want:   true,
+		},
+		{
+			name:   "no nest filter, nest target",
+			filter: S{"neededKey": "value"},
+			target: S{"neededKey": S{"nestNeededKey": "value"}},
+			want:   false,
+		},
 	}
 
 	for _, test := range tests {
