@@ -1,6 +1,8 @@
 package impl
 
 import (
+	"time"
+
 	"github.com/notomo/wsxhub/internal/domain"
 )
 
@@ -11,6 +13,8 @@ type ConnectionImpl struct {
 	targetWorker    domain.Worker
 	id              string
 	filterClause    domain.FilterClause
+	debounce        int
+	debounceTimer   *time.Timer
 }
 
 // ID :
@@ -38,6 +42,15 @@ func (conn *ConnectionImpl) Listen() error {
 
 // Send :
 func (conn *ConnectionImpl) Send(message string) error {
+	if conn.debounceTimer != nil {
+		conn.debounceTimer.Stop()
+	}
+	if conn.debounce > 0 {
+		conn.debounceTimer = time.AfterFunc(time.Duration(conn.debounce)*time.Millisecond, func() {
+			conn.websocketClient.Send(message)
+		})
+		return nil
+	}
 	return conn.websocketClient.Send(message)
 }
 

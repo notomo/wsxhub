@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/notomo/wsxhub/internal"
@@ -16,11 +17,12 @@ import (
 type WebsocketClientFactoryImpl struct {
 	Port         string
 	FilterSource string
+	Debounce     int
 }
 
 // Client :
 func (factory *WebsocketClientFactoryImpl) Client() (domain.WebsocketClient, error) {
-	params := url.Values{"filter": {factory.FilterSource}}
+	params := url.Values{"filter": {factory.FilterSource}, "debounce": {strconv.Itoa(factory.Debounce)}}
 	u := fmt.Sprintf("ws://localhost:%s/?%s", factory.Port, params.Encode())
 	ws, err := websocket.Dial(u, "", "http://localhost/")
 	if err != nil {

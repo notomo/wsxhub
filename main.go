@@ -63,6 +63,7 @@ func main() {
 				factory := &impl.WebsocketClientFactoryImpl{
 					Port:         context.GlobalString("port"),
 					FilterSource: context.String("filter"),
+					Debounce:     context.Int("debounce"),
 				}
 				cmd := command.ReceiveCommand{
 					WebsocketClientFactory: factory,
@@ -78,6 +79,7 @@ func main() {
 				cli.IntFlag{
 					Name:  "debounce",
 					Usage: "Debounce interval(ms)",
+					Value: 0,
 				},
 				cli.StringFlag{
 					Name:  "filter",

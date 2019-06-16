@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/notomo/wsxhub/internal/domain"
 	"github.com/rs/xid"
@@ -28,10 +29,21 @@ func (factory *ServerFactoryImpl) Server(
 	mux := http.NewServeMux()
 	for _, route := range routes {
 		mux.Handle(route.Path, websocket.Handler(func(ws *websocket.Conn) {
-			filterClause, err := factory.FilterClauseFactory.FilterClause(ws.Request().FormValue("filter"))
+			req := ws.Request()
+			filterClause, err := factory.FilterClauseFactory.FilterClause(req.FormValue("filter"))
 			if err != nil {
 				log.Printf("failed to create filterClause: %s", err)
 				return
+			}
+
+			debounce := 0
+			debounceValue := req.FormValue("debounce")
+			if debounceValue != "" {
+				debounce, err = strconv.Atoi(debounceValue)
+				if err != nil {
+					log.Printf("failed to parse debounce: %s", err)
+					return
+				}
 			}
 
 			conn := &ConnectionImpl{
@@ -42,6 +54,7 @@ func (factory *ServerFactoryImpl) Server(
 				targetWorker: factory.TargetWorker,
 				id:           xid.New().String(),
 				filterClause: filterClause,
+				debounce:     debounce,
 			}
 
 			if err := route.Handler(conn); err != nil {
