@@ -96,12 +96,13 @@ func isSubsetKey(filterMap map[string]interface{}, targetMap map[string]interfac
 		if !ok {
 			return false
 		}
+
 		nestMap, nested := value.(map[string]interface{})
 		nestTargetMap, nestedTarget := targetValue.(map[string]interface{})
 		if nested != nestedTarget {
 			return false
 		}
-		if nested && !isSubset(nestMap, nestTargetMap) {
+		if nested && !isSubsetKey(nestMap, nestTargetMap) {
 			return false
 		}
 	}

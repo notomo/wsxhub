@@ -99,7 +99,7 @@ func TestExactKeyMatch(t *testing.T) {
 		{
 			name:   "no nest, the same key",
 			filter: S{"neededKey": "value"},
-			target: S{"neededKey": "value"},
+			target: S{"neededKey": "otherValue"},
 			want:   true,
 		},
 		{
@@ -111,7 +111,7 @@ func TestExactKeyMatch(t *testing.T) {
 		{
 			name:   "nest filter, nest target, the same key",
 			filter: S{"neededKey": S{"nestNeededKey": "value"}},
-			target: S{"neededKey": S{"nestNeededKey": "value"}},
+			target: S{"neededKey": S{"nestNeededKey": "otherValue"}},
 			want:   true,
 		},
 		{
@@ -125,7 +125,7 @@ func TestExactKeyMatch(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			f := FilterImpl{
-				MatchType: domain.MatchTypeExact,
+				MatchType: domain.MatchTypeExactKey,
 				Map:       test.filter,
 			}
 
