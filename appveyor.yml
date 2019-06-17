@@ -5,6 +5,7 @@ clone_folder: c:\gopath\src\github.com\notomo\wsxhub
 
 environment:
     GOPATH: c:\gopath
+    GO111MODULE: on
 
 stack: go 1.12
 
