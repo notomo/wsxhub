@@ -1,6 +1,6 @@
 package domain
 
-// Worker :
+// Worker : handles events from connections
 type Worker interface {
 	Run() error
 	Add(Connection) error

@@ -12,7 +12,7 @@ type PingCommand struct {
 	OutputWriter           io.Writer
 }
 
-// Run :
+// Run : confirms connection and then outputs "pong"
 func (cmd *PingCommand) Run() error {
 	client, err := cmd.WebsocketClientFactory.Client()
 	if err != nil {

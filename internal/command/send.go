@@ -15,7 +15,7 @@ type SendCommand struct {
 	Timeout                int
 }
 
-// Run :
+// Run : sends a message to wsxhub server and receives the response
 func (cmd *SendCommand) Run() error {
 	client, err := cmd.WebsocketClientFactory.Client()
 	if err != nil {

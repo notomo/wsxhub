@@ -13,7 +13,7 @@ type ReceiveCommand struct {
 	Timeout                int
 }
 
-// Run :
+// Run : outputs the received messages
 func (cmd *ReceiveCommand) Run() error {
 	client, err := cmd.WebsocketClientFactory.Client()
 	if err != nil {

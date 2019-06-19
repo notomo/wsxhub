@@ -13,7 +13,9 @@ type ServerCommand struct {
 	InsideServerFactory  domain.ServerFactory
 }
 
-// Run :
+// Run : starts a wsxhub server
+// Inside server responds to wsxhub clients.
+// Outside server responds to the other clients.
 func (cmd *ServerCommand) Run() error {
 	outsideServer, err := cmd.OutsideServerFactory.Server(
 		domain.NewRoute(
