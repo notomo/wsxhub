@@ -121,25 +121,21 @@ type FilterImpl struct {
 func (filter *FilterImpl) Match(targetMap map[string]interface{}) bool {
 	switch filter.MatchType {
 	case domain.MatchTypeExact:
-		return filter.exactMatch(targetMap)
+		return isSubset(filter.Map, targetMap) && isSubset(targetMap, filter.Map)
 	case domain.MatchTypeExactKey:
-		return filter.exactKeyMatch(targetMap)
+		return isSubsetKey(filter.Map, targetMap) && isSubsetKey(targetMap, filter.Map)
 	case domain.MatchTypeRegexp:
-		return filter.regexpMatch(targetMap)
+		return regexpMatch(filter.Map, targetMap)
+	case domain.MatchTypeContained:
+		return isSubset(filter.Map, targetMap)
+	case domain.MatchTypeContain:
+		return isSubset(targetMap, filter.Map)
+	case domain.MatchTypeContainedKey:
+		return isSubsetKey(filter.Map, targetMap)
+	case domain.MatchTypeContainKey:
+		return isSubsetKey(targetMap, filter.Map)
 	}
 	return false
-}
-
-func (filter *FilterImpl) exactMatch(targetMap map[string]interface{}) bool {
-	return isSubset(filter.Map, targetMap) && isSubset(targetMap, filter.Map)
-}
-
-func (filter *FilterImpl) exactKeyMatch(targetMap map[string]interface{}) bool {
-	return isSubsetKey(filter.Map, targetMap) && isSubsetKey(targetMap, filter.Map)
-}
-
-func (filter *FilterImpl) regexpMatch(targetMap map[string]interface{}) bool {
-	return regexpMatch(filter.Map, targetMap)
 }
 
 func regexpMatch(filterMap map[string]interface{}, targetMap map[string]interface{}) bool {

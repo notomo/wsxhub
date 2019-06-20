@@ -222,3 +222,237 @@ func TestRegexpMatch(t *testing.T) {
 		})
 	}
 }
+
+func TestContained(t *testing.T) {
+	type S = map[string]interface{}
+
+	tests := []struct {
+		name   string
+		target S
+		filter S
+		want   bool
+	}{
+		{
+			name:   "empty filter, target",
+			filter: S{},
+			target: S{},
+			want:   true,
+		},
+		{
+			name:   "empty filter",
+			filter: S{},
+			target: S{"otherKey": "value"},
+			want:   true,
+		},
+		{
+			name:   "empty target",
+			filter: S{"neededKey": "neededValue"},
+			target: S{},
+			want:   false,
+		},
+		{
+			name:   "no nest, other key and value",
+			filter: S{"neededKey": "neededValue"},
+			target: S{"otherKey": "otherValue"},
+			want:   false,
+		},
+		{
+			name:   "no nest, the same key and value",
+			filter: S{"neededKey": "neededValue"},
+			target: S{"neededKey": "neededValue"},
+			want:   true,
+		},
+		{
+			name:   "no nest, contained key value",
+			filter: S{"neededKey": "neededValue"},
+			target: S{"neededKey": "neededValue", "otherKey": "otherValue"},
+			want:   true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			f := FilterImpl{
+				MatchType: domain.MatchTypeContained,
+				Map:       test.filter,
+			}
+
+			got := f.Match(test.target)
+
+			if got != test.want {
+				t.Errorf("want %v, but %v:", test.want, got)
+			}
+		})
+	}
+}
+
+func TestContain(t *testing.T) {
+	type S = map[string]interface{}
+
+	tests := []struct {
+		name   string
+		target S
+		filter S
+		want   bool
+	}{
+		{
+			name:   "empty filter, target",
+			filter: S{},
+			target: S{},
+			want:   true,
+		},
+		{
+			name:   "empty filter",
+			filter: S{},
+			target: S{"otherKey": "value"},
+			want:   false,
+		},
+		{
+			name:   "empty target",
+			filter: S{"neededKey": "neededValue"},
+			target: S{},
+			want:   true,
+		},
+		{
+			name:   "no nest, other key and value",
+			filter: S{"neededKey": "neededValue"},
+			target: S{"otherKey": "otherValue"},
+			want:   false,
+		},
+		{
+			name:   "no nest, the same key and value",
+			filter: S{"neededKey": "neededValue"},
+			target: S{"neededKey": "neededValue"},
+			want:   true,
+		},
+		{
+			name:   "no nest, contained key value",
+			filter: S{"neededKey": "neededValue"},
+			target: S{"neededKey": "neededValue", "otherKey": "otherValue"},
+			want:   false,
+		},
+		{
+			name:   "no nest, contain key value",
+			filter: S{"neededKey": "neededValue", "otherKey": "otherValue"},
+			target: S{"neededKey": "neededValue"},
+			want:   true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			f := FilterImpl{
+				MatchType: domain.MatchTypeContain,
+				Map:       test.filter,
+			}
+
+			got := f.Match(test.target)
+
+			if got != test.want {
+				t.Errorf("want %v, but %v:", test.want, got)
+			}
+		})
+	}
+}
+
+func TestContainedKey(t *testing.T) {
+	type S = map[string]interface{}
+
+	tests := []struct {
+		name   string
+		target S
+		filter S
+		want   bool
+	}{
+		{
+			name:   "no nest, other key",
+			filter: S{"neededKey": "neededValue"},
+			target: S{"otherKey": "otherValue"},
+			want:   false,
+		},
+		{
+			name:   "no nest, the same key",
+			filter: S{"neededKey": "otherValue"},
+			target: S{"neededKey": "neededValue"},
+			want:   true,
+		},
+		{
+			name:   "no nest, contained key",
+			filter: S{"neededKey": "otherValue"},
+			target: S{"neededKey": "neededValue", "otherKey": "otherValue"},
+			want:   true,
+		},
+		{
+			name:   "no nest, contain key",
+			filter: S{"neededKey": "neededValue", "otherKey": "otherValue"},
+			target: S{"neededKey": "otherValue"},
+			want:   false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			f := FilterImpl{
+				MatchType: domain.MatchTypeContainedKey,
+				Map:       test.filter,
+			}
+
+			got := f.Match(test.target)
+
+			if got != test.want {
+				t.Errorf("want %v, but %v:", test.want, got)
+			}
+		})
+	}
+}
+
+func TestContainKey(t *testing.T) {
+	type S = map[string]interface{}
+
+	tests := []struct {
+		name   string
+		target S
+		filter S
+		want   bool
+	}{
+		{
+			name:   "no nest, other key",
+			filter: S{"neededKey": "neededValue"},
+			target: S{"otherKey": "otherValue"},
+			want:   false,
+		},
+		{
+			name:   "no nest, the same key",
+			filter: S{"neededKey": "otherValue"},
+			target: S{"neededKey": "neededValue"},
+			want:   true,
+		},
+		{
+			name:   "no nest, contained key",
+			filter: S{"neededKey": "otherValue"},
+			target: S{"neededKey": "neededValue", "otherKey": "otherValue"},
+			want:   false,
+		},
+		{
+			name:   "no nest, contain key",
+			filter: S{"neededKey": "neededValue", "otherKey": "otherValue"},
+			target: S{"neededKey": "otherValue"},
+			want:   true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			f := FilterImpl{
+				MatchType: domain.MatchTypeContainKey,
+				Map:       test.filter,
+			}
+
+			got := f.Match(test.target)
+
+			if got != test.want {
+				t.Errorf("want %v, but %v:", test.want, got)
+			}
+		})
+	}
+}

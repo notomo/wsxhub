@@ -40,6 +40,14 @@ var (
 	MatchTypeExactKey = MatchType("exactKey")
 	// MatchTypeRegexp :
 	MatchTypeRegexp = MatchType("regexp")
+	// MatchTypeContained :
+	MatchTypeContained = MatchType("contained")
+	// MatchTypeContain :
+	MatchTypeContain = MatchType("contain")
+	// MatchTypeContainedKey :
+	MatchTypeContainedKey = MatchType("containedKey")
+	// MatchTypeContainKey :
+	MatchTypeContainKey = MatchType("containKey")
 )
 
 // Validate :
@@ -58,6 +66,10 @@ func matchTypes() []MatchType {
 		MatchTypeExact,
 		MatchTypeExactKey,
 		MatchTypeRegexp,
+		MatchTypeContained,
+		MatchTypeContain,
+		MatchTypeContainedKey,
+		MatchTypeContainKey,
 	}
 }
 
