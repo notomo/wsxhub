@@ -50,17 +50,22 @@ func (worker *WorkerImpl) Run() error {
 					log.Printf("(%s) skipped", worker.Name)
 					continue
 				}
-				if err := conn.Send(message); err != nil {
+				sent, err := conn.Send(message)
+				if err != nil {
 					log.Printf("(%s) failed to send: %s", worker.Name, err)
 					continue
 				}
-				log.Printf("(%s) sent", worker.Name)
+				if sent {
+					log.Printf("(%s) sent", worker.Name)
+				}
 			}
 
 		case err := <-worker.NotifiedSendResult:
 			if err != nil {
 				log.Printf("(%s) failed to send: %s", worker.Name, err)
+				continue
 			}
+			log.Printf("(%s) sent", worker.Name)
 
 		case <-worker.Done:
 			return nil

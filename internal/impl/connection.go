@@ -41,7 +41,7 @@ func (conn *ConnectionImpl) Listen() error {
 }
 
 // Send :
-func (conn *ConnectionImpl) Send(message string) error {
+func (conn *ConnectionImpl) Send(message string) (bool, error) {
 	if conn.debounceTimer != nil {
 		conn.debounceTimer.Stop()
 	}
@@ -50,9 +50,9 @@ func (conn *ConnectionImpl) Send(message string) error {
 			err := conn.websocketClient.Send(message)
 			conn.worker.NotifySendResult(err)
 		})
-		return nil
+		return false, nil
 	}
-	return conn.websocketClient.Send(message)
+	return true, conn.websocketClient.Send(message)
 }
 
 // IsTarget :
