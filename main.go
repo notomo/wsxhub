@@ -114,22 +114,24 @@ func main() {
 			Usage: "Start server",
 			Action: func(context *cli.Context) error {
 				outsideWorker := &impl.WorkerImpl{
-					Name:         "outside",
-					Joined:       make(chan domain.Connection),
-					Received:     make(chan string),
-					Left:         make(chan domain.Connection),
-					Done:         make(chan bool),
-					Conns:        make(map[string]domain.Connection),
-					OutputWriter: os.Stdout,
+					Name:               "outside",
+					Joined:             make(chan domain.Connection),
+					Received:           make(chan string),
+					Left:               make(chan domain.Connection),
+					NotifiedSendResult: make(chan error),
+					Done:               make(chan bool),
+					Conns:              make(map[string]domain.Connection),
+					OutputWriter:       os.Stdout,
 				}
 				insideWorker := &impl.WorkerImpl{
-					Name:         "inside",
-					Joined:       make(chan domain.Connection),
-					Received:     make(chan string),
-					Left:         make(chan domain.Connection),
-					Done:         make(chan bool),
-					Conns:        make(map[string]domain.Connection),
-					OutputWriter: os.Stdout,
+					Name:               "inside",
+					Joined:             make(chan domain.Connection),
+					Received:           make(chan string),
+					Left:               make(chan domain.Connection),
+					NotifiedSendResult: make(chan error),
+					Done:               make(chan bool),
+					Conns:              make(map[string]domain.Connection),
+					OutputWriter:       os.Stdout,
 				}
 				filterClauseFactory := &impl.FilterClauseFactoryImpl{}
 				cmd := command.ServerCommand{

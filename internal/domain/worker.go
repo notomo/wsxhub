@@ -6,4 +6,5 @@ type Worker interface {
 	Add(Connection) error
 	Delete(Connection) error
 	Receive(string) error
+	NotifySendResult(error)
 }

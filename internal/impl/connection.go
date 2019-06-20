@@ -47,7 +47,8 @@ func (conn *ConnectionImpl) Send(message string) error {
 	}
 	if conn.debounce > 0 {
 		conn.debounceTimer = time.AfterFunc(time.Duration(conn.debounce)*time.Millisecond, func() {
-			conn.websocketClient.Send(message)
+			err := conn.websocketClient.Send(message)
+			conn.worker.NotifySendResult(err)
 		})
 		return nil
 	}

@@ -10,13 +10,14 @@ import (
 
 // WorkerImpl :
 type WorkerImpl struct {
-	Name         string
-	Joined       chan domain.Connection
-	Received     chan string
-	Left         chan domain.Connection
-	Done         chan bool
-	Conns        map[string]domain.Connection
-	OutputWriter io.Writer
+	Name               string
+	Joined             chan domain.Connection
+	Received           chan string
+	Left               chan domain.Connection
+	NotifiedSendResult chan error
+	Done               chan bool
+	Conns              map[string]domain.Connection
+	OutputWriter       io.Writer
 }
 
 // Run :
@@ -51,8 +52,14 @@ func (worker *WorkerImpl) Run() error {
 				}
 				if err := conn.Send(message); err != nil {
 					log.Printf("(%s) failed to send: %s", worker.Name, err)
+					continue
 				}
 				log.Printf("(%s) sent", worker.Name)
+			}
+
+		case err := <-worker.NotifiedSendResult:
+			if err != nil {
+				log.Printf("(%s) failed to send: %s", worker.Name, err)
 			}
 
 		case <-worker.Done:
@@ -77,4 +84,9 @@ func (worker *WorkerImpl) Receive(message string) error {
 func (worker *WorkerImpl) Delete(conn domain.Connection) error {
 	worker.Left <- conn
 	return nil
+}
+
+// NotifySendResult :
+func (worker *WorkerImpl) NotifySendResult(err error) {
+	worker.NotifiedSendResult <- err
 }
