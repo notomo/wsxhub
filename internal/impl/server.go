@@ -1,14 +1,15 @@
 package impl
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/websocket"
 	"github.com/notomo/wsxhub/internal/domain"
 	"github.com/rs/xid"
-	"golang.org/x/net/websocket"
 )
 
 // ServerFactoryImpl :
@@ -20,6 +21,11 @@ type ServerFactoryImpl struct {
 	OutputWriter        io.Writer
 }
 
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
 // Server :
 func (factory *ServerFactoryImpl) Server(
 	routes ...domain.Route,
@@ -28,11 +34,12 @@ func (factory *ServerFactoryImpl) Server(
 
 	mux := http.NewServeMux()
 	for _, route := range routes {
-		mux.Handle(route.Path, websocket.Handler(func(ws *websocket.Conn) {
-			req := ws.Request()
+		mux.HandleFunc(route.Path, func(w http.ResponseWriter, req *http.Request) {
 			filterClause, err := factory.FilterClauseFactory.FilterClause(req.FormValue("filter"))
 			if err != nil {
-				log.Printf("failed to create filterClause: %s", err)
+				msg := fmt.Sprintf("failed to create filterClause: %s", err)
+				http.Error(w, msg, http.StatusBadRequest)
+				log.Printf(msg)
 				return
 			}
 
@@ -41,9 +48,17 @@ func (factory *ServerFactoryImpl) Server(
 			if debounceValue != "" {
 				debounce, err = strconv.Atoi(debounceValue)
 				if err != nil {
-					log.Printf("failed to parse debounce: %s", err)
+					msg := fmt.Sprintf("failed to parse debounce: %s", err)
+					http.Error(w, msg, http.StatusBadRequest)
+					log.Printf(msg)
 					return
 				}
+			}
+
+			ws, err := upgrader.Upgrade(w, req, nil)
+			if err != nil {
+				log.Printf("failed to upgrade: %s", err)
+				return
 			}
 
 			conn := &ConnectionImpl{
@@ -60,7 +75,7 @@ func (factory *ServerFactoryImpl) Server(
 			if err := route.Handler(conn); err != nil {
 				log.Print(err)
 			}
-		}))
+		})
 	}
 
 	server := &http.Server{

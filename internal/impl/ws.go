@@ -1,16 +1,18 @@
 package impl
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/url"
 	"strconv"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/notomo/wsxhub/internal"
 	"github.com/notomo/wsxhub/internal/domain"
-	"golang.org/x/net/websocket"
 )
 
 // WebsocketClientFactoryImpl :
@@ -24,9 +26,16 @@ type WebsocketClientFactoryImpl struct {
 func (factory *WebsocketClientFactoryImpl) Client() (domain.WebsocketClient, error) {
 	params := url.Values{"filter": {factory.FilterSource}, "debounce": {strconv.Itoa(factory.Debounce)}}
 	u := fmt.Sprintf("ws://localhost:%s/?%s", factory.Port, params.Encode())
-	ws, err := websocket.Dial(u, "", "http://localhost/")
-	if err != nil {
-		return nil, err
+	ws, resp, wsErr := websocket.DefaultDialer.Dial(u, nil)
+	if wsErr != nil {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, wsErr
+		}
+
+		msg := fmt.Sprintf("%s: %s", wsErr, body)
+		return nil, errors.New(msg)
 	}
 
 	return &WebsocketClientImpl{
@@ -41,7 +50,7 @@ type WebsocketClientImpl struct {
 
 // Send :
 func (client *WebsocketClientImpl) Send(message string) error {
-	return websocket.Message.Send(client.ws, message)
+	return client.ws.WriteMessage(websocket.TextMessage, []byte(message))
 }
 
 // ReceiveOnce :
@@ -50,8 +59,8 @@ func (client *WebsocketClientImpl) ReceiveOnce(timeout int) (string, error) {
 		client.ws.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 	}
 
-	var message string
-	if err := websocket.Message.Receive(client.ws, &message); err != nil {
+	_, message, err := client.ws.ReadMessage()
+	if err != nil {
 		if operr, ok := err.(*net.OpError); ok && operr.Timeout() {
 			return "", internal.ErrTimeout
 		} else if err == io.EOF {
@@ -60,7 +69,7 @@ func (client *WebsocketClientImpl) ReceiveOnce(timeout int) (string, error) {
 		return "", err
 	}
 
-	return message, nil
+	return string(message), nil
 }
 
 // Receive :
