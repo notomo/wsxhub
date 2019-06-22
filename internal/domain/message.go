@@ -1,8 +1,10 @@
 package domain
 
+import "io"
+
 // MessageFactory :
 type MessageFactory interface {
-	Message() (Message, error)
+	FromReader(io.Reader) (Message, error)
 	FromBytes([]byte) (Message, error)
 }
 

@@ -32,11 +32,10 @@ func main() {
 						Port:         context.GlobalString("port"),
 						FilterSource: context.String("filter"),
 					},
-					OutputWriter: os.Stdout,
-					Timeout:      context.Int("timeout"),
-					MessageFactory: &impl.MessageFactoryImpl{
-						InputReader: os.Stdin,
-					},
+					OutputWriter:   os.Stdout,
+					Timeout:        context.Int("timeout"),
+					MessageFactory: &impl.MessageFactoryImpl{},
+					InputReader:    os.Stdin,
 				}
 				if err := cmd.Run(); err != nil {
 					return cli.NewExitError(err, 1)

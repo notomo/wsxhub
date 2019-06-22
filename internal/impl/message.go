@@ -10,7 +10,6 @@ import (
 
 // MessageFactoryImpl :
 type MessageFactoryImpl struct {
-	InputReader io.Reader
 }
 
 // FromBytes :
@@ -26,9 +25,9 @@ func (factory *MessageFactoryImpl) FromBytes(bytes []byte) (domain.Message, erro
 	}, nil
 }
 
-// Message :
-func (factory *MessageFactoryImpl) Message() (domain.Message, error) {
-	bytes, err := ioutil.ReadAll(factory.InputReader)
+// FromReader :
+func (factory *MessageFactoryImpl) FromReader(inputReader io.Reader) (domain.Message, error) {
+	bytes, err := ioutil.ReadAll(inputReader)
 	if err != nil {
 		return nil, err
 	}

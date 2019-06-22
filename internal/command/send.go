@@ -13,6 +13,7 @@ type SendCommand struct {
 	OutputWriter           io.Writer
 	MessageFactory         domain.MessageFactory
 	Timeout                int
+	InputReader            io.Reader
 }
 
 // Run : sends a message to wsxhub server and receives the response
@@ -23,7 +24,7 @@ func (cmd *SendCommand) Run() error {
 	}
 	defer client.Close()
 
-	message, err := cmd.MessageFactory.Message()
+	message, err := cmd.MessageFactory.FromReader(cmd.InputReader)
 	if err != nil {
 		return err
 	}
