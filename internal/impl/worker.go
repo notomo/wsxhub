@@ -1,8 +1,6 @@
 package impl
 
 import (
-	"encoding/json"
-	"io"
 	"log"
 
 	"github.com/notomo/wsxhub/internal/domain"
@@ -12,32 +10,28 @@ import (
 type WorkerImpl struct {
 	Name               string
 	Joined             chan domain.Connection
-	Received           chan string
+	Received           chan domain.Message
 	Left               chan domain.Connection
 	NotifiedSendResult chan error
 	Done               chan bool
 	Conns              map[string]domain.Connection
-	OutputWriter       io.Writer
 }
 
 // NewWorker :
-func NewWorker(name string, outputWriter io.Writer) domain.Worker {
+func NewWorker(name string) domain.Worker {
 	return &WorkerImpl{
 		Name:               name,
 		Joined:             make(chan domain.Connection),
-		Received:           make(chan string),
+		Received:           make(chan domain.Message),
 		Left:               make(chan domain.Connection),
 		NotifiedSendResult: make(chan error),
 		Done:               make(chan bool),
 		Conns:              make(map[string]domain.Connection),
-		OutputWriter:       outputWriter,
 	}
 }
 
 // Run :
 func (worker *WorkerImpl) Run() error {
-	log.SetOutput(worker.OutputWriter)
-
 	log.Printf("(%s) start", worker.Name)
 	for {
 		select {
@@ -53,17 +47,7 @@ func (worker *WorkerImpl) Run() error {
 		case message := <-worker.Received:
 			log.Printf("(%s) received", worker.Name)
 
-			var targetMap map[string]interface{}
-			if err := json.Unmarshal([]byte(message), &targetMap); err != nil {
-				log.Printf("(%s) failed to unmarshal message: %s", worker.Name, err)
-				break
-			}
-
 			for _, conn := range worker.Conns {
-				if !conn.IsTarget(targetMap) {
-					log.Printf("(%s) skipped", worker.Name)
-					continue
-				}
 				sent, err := conn.Send(message)
 				if err != nil {
 					log.Printf("(%s) failed to send: %s", worker.Name, err)
@@ -94,7 +78,7 @@ func (worker *WorkerImpl) Add(conn domain.Connection) error {
 }
 
 // Receive :
-func (worker *WorkerImpl) Receive(message string) error {
+func (worker *WorkerImpl) Receive(message domain.Message) error {
 	worker.Received <- message
 	return nil
 }

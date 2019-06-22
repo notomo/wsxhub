@@ -112,9 +112,10 @@ func main() {
 			Name:  "server",
 			Usage: "Start server",
 			Action: func(context *cli.Context) error {
-				outsideWorker := impl.NewWorker("outside", os.Stdout)
-				insideWorker := impl.NewWorker("inside", os.Stdout)
+				outsideWorker := impl.NewWorker("outside")
+				insideWorker := impl.NewWorker("inside")
 				filterClauseFactory := &impl.FilterClauseFactoryImpl{}
+				messageFactory := &impl.MessageFactoryImpl{}
 				cmd := command.ServerCommand{
 					OutputWriter: os.Stdout,
 					OutsideServerFactory: &impl.ServerFactoryImpl{
@@ -122,14 +123,14 @@ func main() {
 						Worker:              outsideWorker,
 						TargetWorker:        insideWorker,
 						FilterClauseFactory: filterClauseFactory,
-						OutputWriter:        os.Stdout,
+						MessageFactory:      messageFactory,
 					},
 					InsideServerFactory: &impl.ServerFactoryImpl{
 						Port:                context.GlobalString("port"),
 						Worker:              insideWorker,
 						TargetWorker:        outsideWorker,
 						FilterClauseFactory: filterClauseFactory,
-						OutputWriter:        os.Stdout,
+						MessageFactory:      messageFactory,
 					},
 				}
 				if err := cmd.Run(); err != nil {

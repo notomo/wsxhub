@@ -2,7 +2,6 @@ package impl
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,7 +17,7 @@ type ServerFactoryImpl struct {
 	Worker              domain.Worker
 	TargetWorker        domain.Worker
 	FilterClauseFactory domain.FilterClauseFactory
-	OutputWriter        io.Writer
+	MessageFactory      domain.MessageFactory
 }
 
 var upgrader = websocket.Upgrader{
@@ -30,8 +29,6 @@ var upgrader = websocket.Upgrader{
 func (factory *ServerFactoryImpl) Server(
 	routes ...domain.Route,
 ) (domain.Server, error) {
-	log.SetOutput(factory.OutputWriter)
-
 	mux := http.NewServeMux()
 	for _, route := range routes {
 		mux.HandleFunc(route.Path, func(w http.ResponseWriter, req *http.Request) {
@@ -65,11 +62,12 @@ func (factory *ServerFactoryImpl) Server(
 				websocketClient: &WebsocketClientImpl{
 					ws: ws,
 				},
-				worker:       factory.Worker,
-				targetWorker: factory.TargetWorker,
-				id:           xid.New().String(),
-				filterClause: filterClause,
-				debounce:     debounce,
+				worker:         factory.Worker,
+				targetWorker:   factory.TargetWorker,
+				id:             xid.New().String(),
+				filterClause:   filterClause,
+				debounce:       debounce,
+				messageFactory: factory.MessageFactory,
 			}
 			defer conn.Close()
 

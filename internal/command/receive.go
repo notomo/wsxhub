@@ -21,8 +21,8 @@ func (cmd *ReceiveCommand) Run() error {
 	}
 	defer client.Close()
 
-	if err := client.Receive(cmd.Timeout, func(message string) error {
-		_, err := cmd.OutputWriter.Write([]byte(message + "\n"))
+	if err := client.Receive(cmd.Timeout, func(message []byte) error {
+		_, err := cmd.OutputWriter.Write(append(message, '\n'))
 		return err
 	}); err != nil {
 		return err

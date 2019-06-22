@@ -3,7 +3,6 @@ package impl
 import (
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/url"
@@ -49,12 +48,12 @@ type WebsocketClientImpl struct {
 }
 
 // Send :
-func (client *WebsocketClientImpl) Send(message string) error {
-	return client.ws.WriteMessage(websocket.TextMessage, []byte(message))
+func (client *WebsocketClientImpl) Send(message []byte) error {
+	return client.ws.WriteMessage(websocket.TextMessage, message)
 }
 
 // ReceiveOnce :
-func (client *WebsocketClientImpl) ReceiveOnce(timeout int) (string, error) {
+func (client *WebsocketClientImpl) ReceiveOnce(timeout int) ([]byte, error) {
 	if timeout > 0 {
 		client.ws.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 	}
@@ -62,18 +61,18 @@ func (client *WebsocketClientImpl) ReceiveOnce(timeout int) (string, error) {
 	_, message, err := client.ws.ReadMessage()
 	if err != nil {
 		if operr, ok := err.(*net.OpError); ok && operr.Timeout() {
-			return "", internal.ErrTimeout
-		} else if err == io.EOF {
-			return "", internal.ErrEOF
+			return nil, internal.ErrTimeout
+		} else if _, ok := err.(*websocket.CloseError); ok {
+			return nil, internal.ErrEOF
 		}
-		return "", err
+		return nil, err
 	}
 
-	return string(message), nil
+	return message, nil
 }
 
 // Receive :
-func (client *WebsocketClientImpl) Receive(timeout int, callback func(string) error) error {
+func (client *WebsocketClientImpl) Receive(timeout int, callback func([]byte) error) error {
 	for {
 		message, err := client.ReceiveOnce(timeout)
 		if err == internal.ErrEOF {

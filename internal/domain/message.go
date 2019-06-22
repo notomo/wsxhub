@@ -2,5 +2,12 @@ package domain
 
 // MessageFactory :
 type MessageFactory interface {
-	Message() (string, error)
+	Message() (Message, error)
+	FromBytes([]byte) (Message, error)
+}
+
+// Message :
+type Message interface {
+	Bytes() []byte
+	Unmarshaled() map[string]interface{}
 }

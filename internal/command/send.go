@@ -28,7 +28,7 @@ func (cmd *SendCommand) Run() error {
 		return err
 	}
 
-	if err := client.Send(message); err != nil {
+	if err := client.Send(message.Bytes()); err != nil {
 		return err
 	}
 
