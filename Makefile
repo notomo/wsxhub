@@ -1,6 +1,6 @@
 
 test:
-	go build -o dist/wsxhub ./main.go
+	GO111MODULE=on go build -o dist/wsxhub ./main.go
 	go test -v github.com/notomo/wsxhub/... -race
 
 install:

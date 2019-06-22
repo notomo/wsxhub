@@ -38,7 +38,7 @@ func (cmd *SendCommand) Run() error {
 		return err
 	}
 
-	if _, err := cmd.OutputWriter.Write([]byte(received)); err != nil {
+	if _, err := cmd.OutputWriter.Write(received); err != nil {
 		return err
 	}
 
