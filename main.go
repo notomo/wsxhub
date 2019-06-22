@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/notomo/wsxhub/internal/command"
-	"github.com/notomo/wsxhub/internal/domain"
 	"github.com/notomo/wsxhub/internal/impl"
 	"github.com/urfave/cli"
 )
@@ -113,26 +112,8 @@ func main() {
 			Name:  "server",
 			Usage: "Start server",
 			Action: func(context *cli.Context) error {
-				outsideWorker := &impl.WorkerImpl{
-					Name:               "outside",
-					Joined:             make(chan domain.Connection),
-					Received:           make(chan string),
-					Left:               make(chan domain.Connection),
-					NotifiedSendResult: make(chan error),
-					Done:               make(chan bool),
-					Conns:              make(map[string]domain.Connection),
-					OutputWriter:       os.Stdout,
-				}
-				insideWorker := &impl.WorkerImpl{
-					Name:               "inside",
-					Joined:             make(chan domain.Connection),
-					Received:           make(chan string),
-					Left:               make(chan domain.Connection),
-					NotifiedSendResult: make(chan error),
-					Done:               make(chan bool),
-					Conns:              make(map[string]domain.Connection),
-					OutputWriter:       os.Stdout,
-				}
+				outsideWorker := impl.NewWorker("outside", os.Stdout)
+				insideWorker := impl.NewWorker("inside", os.Stdout)
 				filterClauseFactory := &impl.FilterClauseFactoryImpl{}
 				cmd := command.ServerCommand{
 					OutputWriter: os.Stdout,

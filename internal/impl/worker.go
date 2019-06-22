@@ -20,6 +20,20 @@ type WorkerImpl struct {
 	OutputWriter       io.Writer
 }
 
+// NewWorker :
+func NewWorker(name string, outputWriter io.Writer) domain.Worker {
+	return &WorkerImpl{
+		Name:               name,
+		Joined:             make(chan domain.Connection),
+		Received:           make(chan string),
+		Left:               make(chan domain.Connection),
+		NotifiedSendResult: make(chan error),
+		Done:               make(chan bool),
+		Conns:              make(map[string]domain.Connection),
+		OutputWriter:       outputWriter,
+	}
+}
+
 // Run :
 func (worker *WorkerImpl) Run() error {
 	log.SetOutput(worker.OutputWriter)
