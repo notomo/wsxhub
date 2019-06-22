@@ -71,6 +71,7 @@ func (factory *ServerFactoryImpl) Server(
 				filterClause: filterClause,
 				debounce:     debounce,
 			}
+			defer conn.Close()
 
 			if err := route.Handler(conn); err != nil {
 				log.Print(err)

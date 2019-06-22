@@ -21,7 +21,6 @@ func (cmd *ServerCommand) Run() error {
 		domain.NewRoute(
 			"/",
 			func(conn domain.Connection) error {
-				defer conn.Close()
 				return conn.Listen()
 			},
 		),
@@ -34,7 +33,6 @@ func (cmd *ServerCommand) Run() error {
 		domain.NewRoute(
 			"/",
 			func(conn domain.Connection) error {
-				defer conn.Close()
 				return conn.Listen()
 			},
 		),
