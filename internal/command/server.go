@@ -1,14 +1,11 @@
 package command
 
 import (
-	"io"
-
 	"github.com/notomo/wsxhub/internal/domain"
 )
 
 // ServerCommand :
 type ServerCommand struct {
-	OutputWriter         io.Writer
 	OutsideServerFactory domain.ServerFactory
 	InsideServerFactory  domain.ServerFactory
 }

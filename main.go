@@ -116,7 +116,6 @@ func main() {
 				filterClauseFactory := &impl.FilterClauseFactoryImpl{}
 				messageFactory := &impl.MessageFactoryImpl{}
 				cmd := command.ServerCommand{
-					OutputWriter: os.Stdout,
 					OutsideServerFactory: &impl.ServerFactoryImpl{
 						Port:                context.String("outside"),
 						Worker:              outsideWorker,
