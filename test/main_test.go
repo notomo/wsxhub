@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 )
@@ -71,8 +72,11 @@ func (server *testServer) waitToJoin() error {
 	go func() {
 		scanner := bufio.NewScanner(server.stderr)
 		for scanner.Scan() {
-			joined <- true
-			break
+			msg := scanner.Text()
+			if strings.Contains(msg, "(inside) joined") {
+				joined <- true
+				break
+			}
 		}
 	}()
 	select {
