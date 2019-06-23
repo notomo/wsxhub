@@ -23,7 +23,6 @@ func TestReceive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +41,7 @@ func TestReceive(t *testing.T) {
 	go func() {
 		scanner := bufio.NewScanner(stderr)
 		for scanner.Scan() {
-			t.Fatal(scanner.Text())
+			t.Logf(scanner.Text())
 		}
 	}()
 
