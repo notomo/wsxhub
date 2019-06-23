@@ -31,7 +31,7 @@ type testServer struct {
 }
 
 func (server *testServer) start() {
-	server.cmd = exec.Command("../dist/wsxhub", "--port", insidePort, "server", "--outside", outsidePort)
+	server.cmd = exec.Command("../dist/wsxhub", "--port", insidePort, "server", "--outside", outsidePort, "--outside-allow", "localhost:"+outsidePort)
 	stderr, err := server.cmd.StderrPipe()
 	if err != nil {
 		panic(err)

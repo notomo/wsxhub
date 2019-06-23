@@ -26,22 +26,17 @@ type ServerFactoryImpl struct {
 func (factory *ServerFactoryImpl) Server(
 	routes ...domain.Route,
 ) (domain.Server, error) {
+	compiled, err := regexp.Compile(factory.HostPattern)
+	if err != nil {
+		return nil, err
+	}
+
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
-	}
-	if factory.HostPattern != "" {
-		compiled, err := regexp.Compile(factory.HostPattern)
-		if err != nil {
-			return nil, err
-		}
-		upgrader.CheckOrigin = func(req *http.Request) bool {
-			origin := req.Header["Origin"]
-			if len(origin) == 0 {
-				return true
-			}
+		CheckOrigin: func(req *http.Request) bool {
 			return compiled.Match([]byte(req.Host))
-		}
+		},
 	}
 
 	mux := http.NewServeMux()

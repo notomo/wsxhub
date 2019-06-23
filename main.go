@@ -115,6 +115,7 @@ func main() {
 				insideWorker := impl.NewWorker("inside")
 				filterClauseFactory := &impl.FilterClauseFactoryImpl{}
 				messageFactory := &impl.MessageFactoryImpl{}
+				port := context.GlobalString("port")
 				cmd := command.ServerCommand{
 					OutsideServerFactory: &impl.ServerFactoryImpl{
 						Port:                context.String("outside"),
@@ -125,12 +126,12 @@ func main() {
 						HostPattern:         context.String("outside-allow"),
 					},
 					InsideServerFactory: &impl.ServerFactoryImpl{
-						Port:                context.GlobalString("port"),
+						Port:                port,
 						Worker:              insideWorker,
 						TargetWorker:        outsideWorker,
 						FilterClauseFactory: filterClauseFactory,
 						MessageFactory:      messageFactory,
-						HostPattern:         "",
+						HostPattern:         "localhost:" + port,
 					},
 				}
 				if err := cmd.Run(); err != nil {
