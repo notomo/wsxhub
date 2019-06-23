@@ -1,7 +1,10 @@
 
 test:
 	GO111MODULE=on go build -o dist/wsxhub ./main.go
-	go test -v github.com/notomo/wsxhub/... -race
+	go test -v github.com/notomo/wsxhub/... -race -coverprofile=coverage.txt -covermode=atomic
+
+coverage:
+	go tool cover -html=coverage.txt -o index.html
 
 install:
 	go install github.com/notomo/wsxhub
@@ -19,6 +22,7 @@ deploy:
 	git push origin v${v}
 
 .PHONY: test
+.PHONY: coverage
 .PHONY: install
 .PHONY: reup
 .PHONY: start
