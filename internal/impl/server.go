@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	"github.com/gorilla/websocket"
@@ -18,17 +19,31 @@ type ServerFactoryImpl struct {
 	TargetWorker        domain.Worker
 	FilterClauseFactory domain.FilterClauseFactory
 	MessageFactory      domain.MessageFactory
-}
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	HostPattern         string
 }
 
 // Server :
 func (factory *ServerFactoryImpl) Server(
 	routes ...domain.Route,
 ) (domain.Server, error) {
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	if factory.HostPattern != "" {
+		compiled, err := regexp.Compile(factory.HostPattern)
+		if err != nil {
+			return nil, err
+		}
+		upgrader.CheckOrigin = func(req *http.Request) bool {
+			origin := req.Header["Origin"]
+			if len(origin) == 0 {
+				return true
+			}
+			return compiled.Match([]byte(req.Host))
+		}
+	}
+
 	mux := http.NewServeMux()
 	for _, route := range routes {
 		mux.HandleFunc(route.Path, func(w http.ResponseWriter, req *http.Request) {

@@ -122,6 +122,7 @@ func main() {
 						TargetWorker:        insideWorker,
 						FilterClauseFactory: filterClauseFactory,
 						MessageFactory:      messageFactory,
+						HostPattern:         context.String("outside-allow"),
 					},
 					InsideServerFactory: &impl.ServerFactoryImpl{
 						Port:                context.GlobalString("port"),
@@ -129,6 +130,7 @@ func main() {
 						TargetWorker:        outsideWorker,
 						FilterClauseFactory: filterClauseFactory,
 						MessageFactory:      messageFactory,
+						HostPattern:         "",
 					},
 				}
 				if err := cmd.Run(); err != nil {
@@ -141,6 +143,11 @@ func main() {
 					Name:  "outside",
 					Usage: "port for outside",
 					Value: "8001",
+				},
+				cli.StringFlag{
+					Name:  "outside-allow",
+					Usage: "allowed request host pattern",
+					Value: "localhost:8001",
 				},
 			},
 		},
