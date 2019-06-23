@@ -31,16 +31,7 @@ func (factory *MessageFactoryImpl) FromReader(inputReader io.Reader) (domain.Mes
 	if err != nil {
 		return nil, err
 	}
-
-	var unmarshaled map[string]interface{}
-	if err := json.Unmarshal(bytes, &unmarshaled); err != nil {
-		return nil, err
-	}
-
-	return &MessageImpl{
-		bytes:       bytes,
-		unmarshaled: unmarshaled,
-	}, nil
+	return factory.FromBytes(bytes)
 }
 
 // MessageImpl :
