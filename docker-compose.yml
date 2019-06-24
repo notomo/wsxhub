@@ -6,7 +6,7 @@ app:
     ports:
         - "${HOST_OUTSIDE_PORT}:${CONTAINER_OUTSIDE_PORT}"
         - "${HOST_INSIDE_PORT}:${CONTAINER_INSIDE_PORT}"
-    entrypoint: "go run main.go --port=${CONTAINER_INSIDE_PORT} server --outside=${CONTAINER_OUTSIDE_PORT}"
+    entrypoint: "go run main.go --port=${CONTAINER_INSIDE_PORT} server --outside=${CONTAINER_OUTSIDE_PORT} --outside-allow=${OUTSIDE_ALLOW}"
     volumes:
         - ".:/src"
     working_dir: /src
