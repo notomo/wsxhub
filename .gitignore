@@ -1,3 +1,4 @@
-/vendor
 /dist
 .env
+/coverage.txt
+/index.html

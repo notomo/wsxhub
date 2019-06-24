@@ -1,27 +1,30 @@
 language: go
 
+go:
+    - 1.12.x
+
+env:
+    global:
+        - GO111MODULE=on
+
 sudo: false
 
 os:
     - linux
     - osx
 
-install:
-    - go get -u github.com/golang/dep/cmd/dep
-    - dep ensure
-
 script:
     - make test
 
+after_success:
+    - bash <(curl -s https://codecov.io/bash)
+
 before_deploy:
-    - GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/wsxhub cmd/wsxhub/main.go
-    - GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/wsxhubd cmd/wsxhubd/main.go
+    - GOOS=linux GOARCH=amd64 go build -o dist/linux-amd64/wsxhub
     - zip -j dist/wsxhub-linux-amd64-$TRAVIS_TAG.zip dist/linux-amd64/*
-    - GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/wsxhub.exe cmd/wsxhub/main.go
-    - GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/wsxhubd.exe cmd/wsxhubd/main.go
+    - GOOS=windows GOARCH=amd64 go build -o dist/windows-amd64/wsxhub.exe
     - zip -j dist/wsxhub-windows-amd64-$TRAVIS_TAG.zip dist/windows-amd64/*
-    - GOOS=darwin GOARCH=amd64 go build -o dist/darwin-amd64/wsxhub cmd/wsxhub/main.go
-    - GOOS=darwin GOARCH=amd64 go build -o dist/darwin-amd64/wsxhubd cmd/wsxhubd/main.go
+    - GOOS=darwin GOARCH=amd64 go build -o dist/darwin-amd64/wsxhub
     - zip -j dist/wsxhub-darwin-amd64-$TRAVIS_TAG.zip dist/darwin-amd64/*
     - pwd
     - ls -al dist
