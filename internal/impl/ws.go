@@ -27,6 +27,9 @@ func (factory *WebsocketClientFactoryImpl) Client() (domain.WebsocketClient, err
 	u := fmt.Sprintf("ws://localhost:%s/?%s", factory.Port, params.Encode())
 	ws, resp, wsErr := websocket.DefaultDialer.Dial(u, nil)
 	if wsErr != nil {
+		if resp == nil {
+			return nil, wsErr
+		}
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/notomo/wsxhub/internal/command"
@@ -13,7 +14,7 @@ func main() {
 
 	app.Name = "wsxhub"
 	app.Usage = "websocket client from stdio"
-	app.Version = "0.0.5"
+	app.Version = "0.0.6"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "port",
@@ -37,10 +38,7 @@ func main() {
 					MessageFactory: &impl.MessageFactoryImpl{},
 					InputReader:    os.Stdin,
 				}
-				if err := cmd.Run(); err != nil {
-					return cli.NewExitError(err, 1)
-				}
-				return nil
+				return cmd.Run()
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
@@ -68,10 +66,7 @@ func main() {
 					OutputWriter:           os.Stdout,
 					Timeout:                context.Int("timeout"),
 				}
-				if err := cmd.Run(); err != nil {
-					return cli.NewExitError(err, 1)
-				}
-				return nil
+				return cmd.Run()
 			},
 			Flags: []cli.Flag{
 				cli.IntFlag{
@@ -101,10 +96,7 @@ func main() {
 					WebsocketClientFactory: factory,
 					OutputWriter:           os.Stdout,
 				}
-				if err := cmd.Run(); err != nil {
-					return cli.NewExitError(err, 1)
-				}
-				return nil
+				return cmd.Run()
 			},
 		},
 		{
@@ -134,10 +126,7 @@ func main() {
 						HostPattern:         "localhost:" + port,
 					},
 				}
-				if err := cmd.Run(); err != nil {
-					return cli.NewExitError(err, 1)
-				}
-				return nil
+				return cmd.Run()
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
@@ -154,5 +143,8 @@ func main() {
 		},
 	}
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
