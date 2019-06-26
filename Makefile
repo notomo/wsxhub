@@ -8,7 +8,7 @@ coverage:
 	go tool cover -html=coverage.txt -o index.html
 
 install:
-	go install github.com/notomo/wsxhub
+	GO111MODULE=on go install github.com/notomo/wsxhub
 
 reup:
 	docker-compose down
