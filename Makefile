@@ -1,6 +1,9 @@
 
-test:
+build:
 	GO111MODULE=on go build -o dist/wsxhub ./main.go
+
+test:
+	$(MAKE) build
 	go test -v github.com/notomo/wsxhub/... -race -coverprofile=coverage.txt -covermode=atomic
 	$(MAKE) coverage
 
@@ -22,6 +25,7 @@ deploy:
 	git tag v${v}
 	git push origin v${v}
 
+.PHONY: build
 .PHONY: test
 .PHONY: coverage
 .PHONY: install
