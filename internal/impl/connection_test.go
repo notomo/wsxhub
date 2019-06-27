@@ -1,0 +1,160 @@
+package impl
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/notomo/wsxhub/internal/domain"
+	"github.com/notomo/wsxhub/internal/mock"
+)
+
+func TestID(t *testing.T) {
+	id := "1"
+	connection := &ConnectionImpl{
+		id: id,
+	}
+
+	if got := connection.ID(); got != id {
+		t.Errorf("want %v, but %v:", id, got)
+	}
+}
+
+func TestClose(t *testing.T) {
+
+	t.Run("ok", func(t *testing.T) {
+		client := &mock.FakeWebsocketClient{
+			FakeClose: func() error {
+				return nil
+			},
+		}
+		worker := &mock.FakeWorker{
+			FakeDelete: func(connection domain.Connection) error {
+				return nil
+			},
+		}
+		connection := &ConnectionImpl{
+			websocketClient: client,
+			worker:          worker,
+		}
+
+		err := connection.Close()
+
+		if err != nil {
+			t.Errorf("should not be error, but actual: %v", err)
+		}
+	})
+
+	t.Run("fail to delete connection", func(t *testing.T) {
+		worker := &mock.FakeWorker{
+			FakeDelete: func(connection domain.Connection) error {
+				return fmt.Errorf("err")
+			},
+		}
+		connection := &ConnectionImpl{
+			worker: worker,
+		}
+
+		err := connection.Close()
+
+		if err == nil {
+			t.Errorf("should be error, but actual nil")
+		}
+	})
+}
+
+func TestListen(t *testing.T) {
+
+	t.Run("ok", func(t *testing.T) {
+		bytes := []byte("message")
+		client := &mock.FakeWebsocketClient{
+			FakeReceive: func(timeout int, callback func([]byte) error) error {
+				return callback(bytes)
+			},
+		}
+
+		worker := &mock.FakeWorker{
+			FakeAdd: func(connection domain.Connection) error {
+				return nil
+			},
+		}
+		message := &mock.FakeMessage{}
+		targetWorker := &mock.FakeWorker{
+			FakeReceive: func(m domain.Message) error {
+				if message != m {
+					t.Errorf("should be the same message, but actual: %v, %v", message, m)
+				}
+				return nil
+			},
+		}
+		messageFactory := &mock.FakeMessageFactory{
+			FakeFromBytes: func(b []byte) (domain.Message, error) {
+				if string(bytes) != string(b) {
+					t.Errorf("should be the same bytes, but actual: %v, %v", bytes, b)
+				}
+				return message, nil
+			},
+		}
+
+		connection := &ConnectionImpl{
+			websocketClient: client,
+			worker:          worker,
+			targetWorker:    targetWorker,
+			messageFactory:  messageFactory,
+		}
+
+		err := connection.Listen()
+
+		if err != nil {
+			t.Errorf("should not be error, but actual: %v", err)
+		}
+	})
+
+	t.Run("fail to create message", func(t *testing.T) {
+		client := &mock.FakeWebsocketClient{
+			FakeReceive: func(timeout int, callback func([]byte) error) error {
+				return callback([]byte(""))
+			},
+		}
+
+		worker := &mock.FakeWorker{
+			FakeAdd: func(connection domain.Connection) error {
+				return nil
+			},
+		}
+
+		messageFactory := &mock.FakeMessageFactory{
+			FakeFromBytes: func(_ []byte) (domain.Message, error) {
+				return nil, fmt.Errorf("err")
+			},
+		}
+
+		connection := &ConnectionImpl{
+			websocketClient: client,
+			worker:          worker,
+			messageFactory:  messageFactory,
+		}
+
+		err := connection.Listen()
+
+		if err == nil {
+			t.Errorf("should be error, but actual nil")
+		}
+	})
+
+	t.Run("fail to add connection", func(t *testing.T) {
+		worker := &mock.FakeWorker{
+			FakeAdd: func(connection domain.Connection) error {
+				return fmt.Errorf("err")
+			},
+		}
+		connection := &ConnectionImpl{
+			worker: worker,
+		}
+
+		err := connection.Listen()
+
+		if err == nil {
+			t.Errorf("should be error, but actual nil")
+		}
+	})
+}

@@ -10,11 +10,17 @@ import (
 type FakeMessageFactory struct {
 	domain.MessageFactory
 	FakeFromReader func(io.Reader) (domain.Message, error)
+	FakeFromBytes  func([]byte) (domain.Message, error)
 }
 
 // FromReader :
 func (factory *FakeMessageFactory) FromReader(inputReader io.Reader) (domain.Message, error) {
 	return factory.FakeFromReader(inputReader)
+}
+
+// FromBytes :
+func (factory *FakeMessageFactory) FromBytes(bytes []byte) (domain.Message, error) {
+	return factory.FakeFromBytes(bytes)
 }
 
 // FakeMessage :
