@@ -3,6 +3,7 @@ package impl
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/notomo/wsxhub/internal/domain"
 	"github.com/notomo/wsxhub/internal/mock"
@@ -155,6 +156,128 @@ func TestListen(t *testing.T) {
 
 		if err == nil {
 			t.Errorf("should be error, but actual nil")
+		}
+	})
+}
+
+func TestSend(t *testing.T) {
+	t.Run("filtered", func(t *testing.T) {
+		targetMap := map[string]interface{}{"a": "b"}
+		message := &mock.FakeMessage{
+			FakeUnmarshaled: func() map[string]interface{} {
+				return targetMap
+			},
+		}
+
+		filterClause := &mock.FakeFilterClause{
+			FakeMatch: func(m map[string]interface{}) bool {
+				if targetMap["a"] != m["a"] {
+					t.Errorf("should be the same bytes, but actual: %v, %v", targetMap, m)
+				}
+				return false
+			},
+		}
+
+		connection := &ConnectionImpl{
+			filterClause: filterClause,
+		}
+
+		sent, err := connection.Send(message)
+		if sent == true {
+			t.Errorf("should not send")
+		}
+		if err != nil {
+			t.Errorf("should not be error, but actual: %v", err)
+		}
+	})
+
+	t.Run("send", func(t *testing.T) {
+		client := &mock.FakeWebsocketClient{
+			FakeSend: func(b []byte) error {
+				return nil
+			},
+		}
+
+		bytes := []byte("message")
+		message := &mock.FakeMessage{
+			FakeUnmarshaled: func() map[string]interface{} {
+				return map[string]interface{}{}
+			},
+			FakeBytes: func() []byte {
+				return bytes
+			},
+		}
+
+		filterClause := &mock.FakeFilterClause{
+			FakeMatch: func(_ map[string]interface{}) bool {
+				return true
+			},
+		}
+
+		connection := &ConnectionImpl{
+			websocketClient: client,
+			filterClause:    filterClause,
+		}
+
+		sent, err := connection.Send(message)
+		if sent == false {
+			t.Errorf("should send")
+		}
+		if err != nil {
+			t.Errorf("should not be error, but actual: %v", err)
+		}
+	})
+
+	t.Run("timer stop and start", func(t *testing.T) {
+		client := &mock.FakeWebsocketClient{
+			FakeSend: func(b []byte) error {
+				return nil
+			},
+		}
+
+		bytes := []byte("message")
+		message := &mock.FakeMessage{
+			FakeUnmarshaled: func() map[string]interface{} {
+				return map[string]interface{}{}
+			},
+			FakeBytes: func() []byte {
+				return bytes
+			},
+		}
+
+		filterClause := &mock.FakeFilterClause{
+			FakeMatch: func(_ map[string]interface{}) bool {
+				return true
+			},
+		}
+
+		notified := make(chan bool)
+		worker := &mock.FakeWorker{
+			FakeNotifySendResult: func(err error) {
+				notified <- true
+			},
+		}
+
+		connection := &ConnectionImpl{
+			websocketClient: client,
+			filterClause:    filterClause,
+			worker:          worker,
+			debounce:        100,
+			debounceTimer:   time.NewTimer(time.Duration(100) * time.Millisecond),
+		}
+
+		sent, err := connection.Send(message)
+
+		select {
+		case <-notified:
+			if sent == true {
+				t.Errorf("should not send")
+			}
+			if err != nil {
+				t.Errorf("should not be error, but actual: %v", err)
+			}
+		case <-time.After(1 * time.Second):
+			t.Fatalf("should be notified")
 		}
 	})
 }

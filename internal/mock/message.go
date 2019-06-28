@@ -26,10 +26,16 @@ func (factory *FakeMessageFactory) FromBytes(bytes []byte) (domain.Message, erro
 // FakeMessage :
 type FakeMessage struct {
 	domain.Message
-	FakeBytes func() []byte
+	FakeBytes       func() []byte
+	FakeUnmarshaled func() map[string]interface{}
 }
 
 // Bytes :
 func (factory *FakeMessage) Bytes() []byte {
 	return factory.FakeBytes()
+}
+
+// Unmarshaled :
+func (factory *FakeMessage) Unmarshaled() map[string]interface{} {
+	return factory.FakeUnmarshaled()
 }
