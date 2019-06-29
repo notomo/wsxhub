@@ -18,7 +18,7 @@ type WorkerImpl struct {
 }
 
 // NewWorker :
-func NewWorker(name string) domain.Worker {
+func NewWorker(name string) *WorkerImpl {
 	return &WorkerImpl{
 		Name:               name,
 		Joined:             make(chan domain.Connection),
@@ -92,4 +92,9 @@ func (worker *WorkerImpl) Delete(conn domain.Connection) error {
 // NotifySendResult :
 func (worker *WorkerImpl) NotifySendResult(err error) {
 	worker.NotifiedSendResult <- err
+}
+
+// Finish :
+func (worker *WorkerImpl) Finish() {
+	worker.Done <- true
 }

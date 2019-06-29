@@ -7,4 +7,5 @@ type Worker interface {
 	Delete(Connection) error
 	Receive(Message) error
 	NotifySendResult(error)
+	Finish()
 }
