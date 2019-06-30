@@ -83,18 +83,18 @@ type FilterClauseImpl struct {
 }
 
 // Match :
-func (group *FilterClauseImpl) Match(targetMap map[string]interface{}) bool {
-	switch group.OperatorType {
+func (clause *FilterClauseImpl) Match(targetMap map[string]interface{}) bool {
+	switch clause.OperatorType {
 	case domain.OperatorTypeAnd:
-		return group.andMatch(targetMap)
+		return clause.andMatch(targetMap)
 	case domain.OperatorTypeOr:
-		return group.orMatch(targetMap)
+		return clause.orMatch(targetMap)
 	}
 	return true
 }
 
-func (group *FilterClauseImpl) andMatch(targetMap map[string]interface{}) bool {
-	for _, filter := range group.Filters {
+func (clause *FilterClauseImpl) andMatch(targetMap map[string]interface{}) bool {
+	for _, filter := range clause.Filters {
 		if !filter.Match(targetMap) {
 			return false
 		}
@@ -102,8 +102,8 @@ func (group *FilterClauseImpl) andMatch(targetMap map[string]interface{}) bool {
 	return true
 }
 
-func (group *FilterClauseImpl) orMatch(targetMap map[string]interface{}) bool {
-	for _, filter := range group.Filters {
+func (clause *FilterClauseImpl) orMatch(targetMap map[string]interface{}) bool {
+	for _, filter := range clause.Filters {
 		if filter.Match(targetMap) {
 			return true
 		}
