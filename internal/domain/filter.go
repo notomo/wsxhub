@@ -80,5 +80,5 @@ type FilterClauseFactory interface {
 
 // FilterClause :
 type FilterClause interface {
-	Match(map[string]interface{}) bool
+	Match(Message) bool
 }

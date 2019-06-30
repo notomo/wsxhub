@@ -28,6 +28,10 @@ func (factory *FilterClauseFactoryImpl) FilterClause(source string) (domain.Filt
 		return nil, err
 	}
 
+	if err := filterClause.BatchOperatorType.Validate(); err != nil {
+		return nil, err
+	}
+
 	for i, filter := range filterClause.Filters {
 		filter := filter
 		if err := filter.MatchType.Validate(); err != nil {
@@ -78,34 +82,82 @@ func toRegexpMap(filterMap map[string]interface{}) (map[string]interface{}, erro
 
 // FilterClauseImpl :
 type FilterClauseImpl struct {
-	OperatorType domain.OperatorType `json:"operator"`
-	Filters      []FilterImpl        `json:"filters"`
+	OperatorType      domain.OperatorType `json:"operator"`
+	BatchOperatorType domain.OperatorType `json:"batchOperator"`
+	Filters           []FilterImpl        `json:"filters"`
 }
 
 // Match :
-func (clause *FilterClauseImpl) Match(targetMap map[string]interface{}) bool {
+func (clause *FilterClauseImpl) Match(message domain.Message) bool {
+	targetMaps := message.Unmarshaled()
 	switch clause.OperatorType {
 	case domain.OperatorTypeAnd:
-		return clause.andMatch(targetMap)
+		switch clause.BatchOperatorType {
+		case domain.OperatorTypeAnd:
+			return clause.andMatchAll(targetMaps)
+		case domain.OperatorTypeOr:
+			return clause.andMatchOne(targetMaps)
+		}
 	case domain.OperatorTypeOr:
-		return clause.orMatch(targetMap)
+		switch clause.BatchOperatorType {
+		case domain.OperatorTypeAnd:
+			return clause.orMatchAll(targetMaps)
+		case domain.OperatorTypeOr:
+			return clause.orMatchOne(targetMaps)
+		}
 	}
 	return true
 }
 
-func (clause *FilterClauseImpl) andMatch(targetMap map[string]interface{}) bool {
+func (clause *FilterClauseImpl) andMatchAll(targetMaps []map[string]interface{}) bool {
 	for _, filter := range clause.Filters {
-		if !filter.Match(targetMap) {
+		for _, target := range targetMaps {
+			if !filter.Match(target) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (clause *FilterClauseImpl) andMatchOne(targetMaps []map[string]interface{}) bool {
+	for _, filter := range clause.Filters {
+		ok := false
+		for _, target := range targetMaps {
+			if filter.Match(target) {
+				ok = true
+				break
+			}
+		}
+		if !ok {
 			return false
 		}
 	}
 	return true
 }
 
-func (clause *FilterClauseImpl) orMatch(targetMap map[string]interface{}) bool {
+func (clause *FilterClauseImpl) orMatchAll(targetMaps []map[string]interface{}) bool {
 	for _, filter := range clause.Filters {
-		if filter.Match(targetMap) {
+		ok := true
+		for _, target := range targetMaps {
+			if !filter.Match(target) {
+				ok = false
+				break
+			}
+		}
+		if ok {
 			return true
+		}
+	}
+	return false
+}
+
+func (clause *FilterClauseImpl) orMatchOne(targetMaps []map[string]interface{}) bool {
+	for _, filter := range clause.Filters {
+		for _, target := range targetMaps {
+			if filter.Match(target) {
+				return true
+			}
 		}
 	}
 	return false

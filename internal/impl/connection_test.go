@@ -162,17 +162,12 @@ func TestListen(t *testing.T) {
 
 func TestSend(t *testing.T) {
 	t.Run("filtered", func(t *testing.T) {
-		targetMap := map[string]interface{}{"a": "b"}
-		message := &mock.FakeMessage{
-			FakeUnmarshaled: func() map[string]interface{} {
-				return targetMap
-			},
-		}
+		message := &mock.FakeMessage{}
 
 		filterClause := &mock.FakeFilterClause{
-			FakeMatch: func(m map[string]interface{}) bool {
-				if targetMap["a"] != m["a"] {
-					t.Errorf("should be the same bytes, but actual: %v, %v", targetMap, m)
+			FakeMatch: func(m domain.Message) bool {
+				if message != m {
+					t.Errorf("should be the same message, but actual: %v, %v", message, m)
 				}
 				return false
 			},
@@ -200,16 +195,13 @@ func TestSend(t *testing.T) {
 
 		bytes := []byte("message")
 		message := &mock.FakeMessage{
-			FakeUnmarshaled: func() map[string]interface{} {
-				return map[string]interface{}{}
-			},
 			FakeBytes: func() []byte {
 				return bytes
 			},
 		}
 
 		filterClause := &mock.FakeFilterClause{
-			FakeMatch: func(_ map[string]interface{}) bool {
+			FakeMatch: func(_ domain.Message) bool {
 				return true
 			},
 		}
@@ -237,16 +229,13 @@ func TestSend(t *testing.T) {
 
 		bytes := []byte("message")
 		message := &mock.FakeMessage{
-			FakeUnmarshaled: func() map[string]interface{} {
-				return map[string]interface{}{}
-			},
 			FakeBytes: func() []byte {
 				return bytes
 			},
 		}
 
 		filterClause := &mock.FakeFilterClause{
-			FakeMatch: func(_ map[string]interface{}) bool {
+			FakeMatch: func(_ domain.Message) bool {
 				return true
 			},
 		}

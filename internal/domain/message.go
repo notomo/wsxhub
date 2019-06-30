@@ -11,5 +11,5 @@ type MessageFactory interface {
 // Message :
 type Message interface {
 	Bytes() []byte
-	Unmarshaled() map[string]interface{}
+	Unmarshaled() []map[string]interface{}
 }

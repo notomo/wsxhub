@@ -48,7 +48,7 @@ func (conn *ConnectionImpl) Listen() error {
 
 // Send :
 func (conn *ConnectionImpl) Send(message domain.Message) (bool, error) {
-	if !conn.filterClause.Match(message.Unmarshaled()) {
+	if !conn.filterClause.Match(message) {
 		return false, nil
 	}
 
