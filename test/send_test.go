@@ -1,9 +1,7 @@
 package command_test
 
 import (
-	"bufio"
 	"fmt"
-	"os/exec"
 	"testing"
 	"time"
 
@@ -14,16 +12,8 @@ func TestSend(t *testing.T) {
 	server.start()
 	defer server.stop()
 
-	cmd := exec.Command("../dist/wsxhub", "--port", insidePort, "send")
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := cmd.Start(); err != nil {
+	cmdClient := newCommandClient(t, "send")
+	if err := cmdClient.cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -34,12 +24,8 @@ func TestSend(t *testing.T) {
 	}
 	defer ws.Close()
 
-	id := "1"
-	msg := fmt.Sprintf(`{"id":"%s"}`, id)
-	if _, err := stdin.Write([]byte(msg)); err != nil {
-		t.Fatal(err)
-	}
-	stdin.Close()
+	msg := `{"id":"1"}`
+	cmdClient.writeStdin(msg)
 
 	_, message, err := ws.ReadMessage()
 	if err != nil {
@@ -49,16 +35,54 @@ func TestSend(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sent := make(chan string)
-	go func() {
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			sent <- scanner.Text()
-			break
-		}
-	}()
+	sent := cmdClient.scanStdout()
 
-	if err := cmd.Wait(); err != nil {
+	if err := cmdClient.cmd.Wait(); err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case got := <-sent:
+		want := string(message)
+		if got != want {
+			t.Errorf("want %v, but %v", want, got)
+		}
+	case <-time.After(1 * time.Second):
+		t.Fatal("timeout")
+	}
+}
+
+func TestBatchSend(t *testing.T) {
+	server.start()
+	defer server.stop()
+
+	filter := `{"filters": [{"map": {"id": "1"}}, {"map": {"id": "2"}}]}`
+	cmdClient := newCommandClient(t, "send", "--filter", filter)
+	if err := cmdClient.cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	u := fmt.Sprintf("ws://localhost:%s", outsidePort)
+	ws, _, err := websocket.DefaultDialer.Dial(u, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ws.Close()
+
+	msg := `[{"id":"1"},{"id":"2"}]`
+	cmdClient.writeStdin(msg)
+
+	_, message, err := ws.ReadMessage()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ws.WriteMessage(websocket.TextMessage, message); err != nil {
+		t.Fatal(err)
+	}
+
+	sent := cmdClient.scanStdout()
+
+	if err := cmdClient.cmd.Wait(); err != nil {
 		t.Fatal(err)
 	}
 

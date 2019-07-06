@@ -23,7 +23,7 @@ func TestFromReader(t *testing.T) {
 		}
 	}
 	{
-		got := message.Unmarshaled()["id"]
+		got := message.Unmarshaled()[0]["id"]
 		want := "1"
 		if got != want {
 			t.Errorf("want %v, but %v:", want, got)

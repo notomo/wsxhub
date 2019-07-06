@@ -1,9 +1,7 @@
 package command_test
 
 import (
-	"bufio"
 	"fmt"
-	"os/exec"
 	"testing"
 	"time"
 
@@ -14,36 +12,15 @@ func TestReceive(t *testing.T) {
 	server.start()
 	defer server.stop()
 
-	cmd := exec.Command("../dist/wsxhub", "--port", insidePort, "receive")
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := cmd.Start(); err != nil {
+	cmdClient := newCommandClient(t, "receive")
+	if err := cmdClient.cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
 	if err := server.waitToJoin(); err != nil {
 		t.Fatal(err)
 	}
 
-	received := make(chan string)
-	go func() {
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			received <- scanner.Text()
-			break
-		}
-	}()
-	go func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			t.Logf(scanner.Text())
-		}
-	}()
+	received := cmdClient.scanStdout()
 
 	u := fmt.Sprintf("ws://localhost:%s", outsidePort)
 	ws, _, err := websocket.DefaultDialer.Dial(u, nil)
@@ -57,9 +34,9 @@ func TestReceive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := message
 	select {
 	case got := <-received:
+		want := message
 		if got != want {
 			t.Errorf("want %v, but %v", want, got)
 		}

@@ -10,6 +10,8 @@ var (
 	OperatorTypeAnd = OperatorType("and")
 	// OperatorTypeOr :
 	OperatorTypeOr = OperatorType("or")
+	// OperatorTypeDefault :
+	OperatorTypeDefault = OperatorType("")
 )
 
 // Validate :
@@ -27,6 +29,7 @@ func operatorTypes() []OperatorType {
 	return []OperatorType{
 		OperatorTypeAnd,
 		OperatorTypeOr,
+		OperatorTypeDefault,
 	}
 }
 
@@ -48,6 +51,8 @@ var (
 	MatchTypeContainedKey = MatchType("containedKey")
 	// MatchTypeContainKey :
 	MatchTypeContainKey = MatchType("containKey")
+	// MatchTypeDefault :
+	MatchTypeDefault = MatchType("")
 )
 
 // Validate :
@@ -70,6 +75,7 @@ func matchTypes() []MatchType {
 		MatchTypeContain,
 		MatchTypeContainedKey,
 		MatchTypeContainKey,
+		MatchTypeDefault,
 	}
 }
 
@@ -80,5 +86,5 @@ type FilterClauseFactory interface {
 
 // FilterClause :
 type FilterClause interface {
-	Match(map[string]interface{}) bool
+	Match(Message) (bool, error)
 }

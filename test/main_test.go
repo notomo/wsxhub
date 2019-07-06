@@ -3,6 +3,7 @@ package command_test
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -45,11 +46,12 @@ func (server *testServer) start() {
 	started := make(chan bool)
 	go func() {
 		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			started <- true
-			started <- true
-			break
-		}
+		scanner.Scan()
+		fmt.Println(scanner.Text())
+		started <- true
+		scanner.Scan()
+		fmt.Println(scanner.Text())
+		started <- true
 	}()
 	<-started
 	<-started
@@ -85,4 +87,85 @@ func (server *testServer) waitToJoin() error {
 	case <-time.After(1 * time.Second):
 		return errors.New("timeout for join")
 	}
+}
+
+type commandClient struct {
+	stdout io.ReadCloser
+	stderr io.ReadCloser
+	stdin  io.WriteCloser
+	cmd    *exec.Cmd
+	t      *testing.T
+}
+
+func newCommandClient(t *testing.T, extendedArgs ...string) *commandClient {
+	bin := "../dist/wsxhub"
+	baseArgs := []string{"--port", insidePort}
+	args := append(baseArgs, extendedArgs...)
+	cmd := exec.Command(bin, args...)
+	t.Logf("command: %s %s", bin, strings.Join(args, " "))
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		panic(err)
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		panic(err)
+	}
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		panic(err)
+	}
+
+	return &commandClient{
+		stdout: stdout,
+		stderr: stderr,
+		stdin:  stdin,
+		cmd:    cmd,
+		t:      t,
+	}
+}
+
+func (cmdClient *commandClient) scanStderr() chan string {
+	received := make(chan string)
+	go func() {
+		scanner := bufio.NewScanner(cmdClient.stderr)
+		for scanner.Scan() {
+			msg := scanner.Text()
+			cmdClient.t.Logf("scanned: %s", msg)
+			received <- msg
+			break
+		}
+	}()
+	return received
+}
+
+func (cmdClient *commandClient) scanStdout() chan string {
+	received := make(chan string)
+	go func() {
+		scanner := bufio.NewScanner(cmdClient.stdout)
+		for scanner.Scan() {
+			msg := scanner.Text()
+			cmdClient.t.Logf("scanned: %s", msg)
+			received <- msg
+			break
+		}
+	}()
+
+	go func() {
+		scanner := bufio.NewScanner(cmdClient.stderr)
+		for scanner.Scan() {
+			cmdClient.t.Logf("stderr: %s", scanner.Text())
+		}
+	}()
+
+	return received
+}
+
+func (cmdClient *commandClient) writeStdin(msg string) {
+	if _, err := cmdClient.stdin.Write([]byte(msg)); err != nil {
+		panic(err)
+	}
+	cmdClient.stdin.Close()
+	cmdClient.t.Logf("written: %s", msg)
 }

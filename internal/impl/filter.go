@@ -28,6 +28,10 @@ func (factory *FilterClauseFactoryImpl) FilterClause(source string) (domain.Filt
 		return nil, err
 	}
 
+	if err := filterClause.BatchOperatorType.Validate(); err != nil {
+		return nil, err
+	}
+
 	for i, filter := range filterClause.Filters {
 		filter := filter
 		if err := filter.MatchType.Validate(); err != nil {
@@ -78,37 +82,104 @@ func toRegexpMap(filterMap map[string]interface{}) (map[string]interface{}, erro
 
 // FilterClauseImpl :
 type FilterClauseImpl struct {
-	OperatorType domain.OperatorType `json:"operator"`
-	Filters      []FilterImpl        `json:"filters"`
+	OperatorType      domain.OperatorType `json:"operator"`
+	BatchOperatorType domain.OperatorType `json:"batchOperator"`
+	Filters           []FilterImpl        `json:"filters"`
 }
 
 // Match :
-func (group *FilterClauseImpl) Match(targetMap map[string]interface{}) bool {
-	switch group.OperatorType {
+func (clause *FilterClauseImpl) Match(message domain.Message) (bool, error) {
+	if len(clause.Filters) == 0 {
+		return true, nil
+	}
+	targetMaps := message.Unmarshaled()
+	switch clause.OperatorType {
 	case domain.OperatorTypeAnd:
-		return group.andMatch(targetMap)
-	case domain.OperatorTypeOr:
-		return group.orMatch(targetMap)
-	}
-	return true
-}
-
-func (group *FilterClauseImpl) andMatch(targetMap map[string]interface{}) bool {
-	for _, filter := range group.Filters {
-		if !filter.Match(targetMap) {
-			return false
+		switch clause.BatchOperatorType {
+		case domain.OperatorTypeAnd, domain.OperatorTypeDefault:
+			return clause.andMatchAll(targetMaps)
+		case domain.OperatorTypeOr:
+			return clause.andMatchOne(targetMaps)
+		}
+	case domain.OperatorTypeOr, domain.OperatorTypeDefault:
+		switch clause.BatchOperatorType {
+		case domain.OperatorTypeAnd, domain.OperatorTypeDefault:
+			return clause.orMatchAll(targetMaps)
+		case domain.OperatorTypeOr:
+			return clause.orMatchOne(targetMaps)
 		}
 	}
-	return true
+	return false, errors.New("maybe operator type is not validated: " + string(clause.OperatorType))
 }
 
-func (group *FilterClauseImpl) orMatch(targetMap map[string]interface{}) bool {
-	for _, filter := range group.Filters {
-		if filter.Match(targetMap) {
-			return true
+func (clause *FilterClauseImpl) andMatchAll(targetMaps []map[string]interface{}) (bool, error) {
+	for _, target := range targetMaps {
+		for _, filter := range clause.Filters {
+			matched, err := filter.Match(target)
+			if err != nil {
+				return false, err
+			}
+			if !matched {
+				return false, nil
+			}
 		}
 	}
-	return false
+	return true, nil
+}
+
+func (clause *FilterClauseImpl) andMatchOne(targetMaps []map[string]interface{}) (bool, error) {
+	for _, filter := range clause.Filters {
+		ok := false
+		for _, target := range targetMaps {
+			matched, err := filter.Match(target)
+			if err != nil {
+				return false, err
+			}
+			if matched {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func (clause *FilterClauseImpl) orMatchAll(targetMaps []map[string]interface{}) (bool, error) {
+	for _, target := range targetMaps {
+		ok := false
+		for _, filter := range clause.Filters {
+			matched, err := filter.Match(target)
+			if err != nil {
+				return false, err
+			}
+			if matched {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func (clause *FilterClauseImpl) orMatchOne(targetMaps []map[string]interface{}) (bool, error) {
+	for _, target := range targetMaps {
+		for _, filter := range clause.Filters {
+			matched, err := filter.Match(target)
+			if err != nil {
+				return false, err
+			}
+			if matched {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 // FilterImpl :
@@ -118,24 +189,24 @@ type FilterImpl struct {
 }
 
 // Match :
-func (filter *FilterImpl) Match(targetMap map[string]interface{}) bool {
+func (filter *FilterImpl) Match(targetMap map[string]interface{}) (bool, error) {
 	switch filter.MatchType {
 	case domain.MatchTypeExact:
-		return isSubset(filter.Map, targetMap) && isSubset(targetMap, filter.Map)
+		return isSubset(filter.Map, targetMap) && isSubset(targetMap, filter.Map), nil
 	case domain.MatchTypeExactKey:
-		return isSubsetKey(filter.Map, targetMap) && isSubsetKey(targetMap, filter.Map)
+		return isSubsetKey(filter.Map, targetMap) && isSubsetKey(targetMap, filter.Map), nil
 	case domain.MatchTypeRegexp:
-		return regexpMatch(filter.Map, targetMap)
-	case domain.MatchTypeContained:
-		return isSubset(filter.Map, targetMap)
+		return regexpMatch(filter.Map, targetMap), nil
+	case domain.MatchTypeContained, domain.MatchTypeDefault:
+		return isSubset(filter.Map, targetMap), nil
 	case domain.MatchTypeContain:
-		return isSubset(targetMap, filter.Map)
+		return isSubset(targetMap, filter.Map), nil
 	case domain.MatchTypeContainedKey:
-		return isSubsetKey(filter.Map, targetMap)
+		return isSubsetKey(filter.Map, targetMap), nil
 	case domain.MatchTypeContainKey:
-		return isSubsetKey(targetMap, filter.Map)
+		return isSubsetKey(targetMap, filter.Map), nil
 	}
-	return false
+	return false, errors.New("maybe match type is not validated: " + string(filter.MatchType))
 }
 
 func regexpMatch(filterMap map[string]interface{}, targetMap map[string]interface{}) bool {

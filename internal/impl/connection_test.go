@@ -162,19 +162,14 @@ func TestListen(t *testing.T) {
 
 func TestSend(t *testing.T) {
 	t.Run("filtered", func(t *testing.T) {
-		targetMap := map[string]interface{}{"a": "b"}
-		message := &mock.FakeMessage{
-			FakeUnmarshaled: func() map[string]interface{} {
-				return targetMap
-			},
-		}
+		message := &mock.FakeMessage{}
 
 		filterClause := &mock.FakeFilterClause{
-			FakeMatch: func(m map[string]interface{}) bool {
-				if targetMap["a"] != m["a"] {
-					t.Errorf("should be the same bytes, but actual: %v, %v", targetMap, m)
+			FakeMatch: func(m domain.Message) (bool, error) {
+				if message != m {
+					t.Errorf("should be the same message, but actual: %v, %v", message, m)
 				}
-				return false
+				return false, nil
 			},
 		}
 
@@ -191,6 +186,24 @@ func TestSend(t *testing.T) {
 		}
 	})
 
+	t.Run("filter error", func(t *testing.T) {
+		message := &mock.FakeMessage{}
+
+		filterClause := &mock.FakeFilterClause{
+			FakeMatch: func(m domain.Message) (bool, error) {
+				return false, fmt.Errorf("err")
+			},
+		}
+
+		connection := &ConnectionImpl{
+			filterClause: filterClause,
+		}
+
+		if _, err := connection.Send(message); err == nil {
+			t.Errorf("should be error")
+		}
+	})
+
 	t.Run("send", func(t *testing.T) {
 		client := &mock.FakeWebsocketClient{
 			FakeSend: func(b []byte) error {
@@ -200,17 +213,14 @@ func TestSend(t *testing.T) {
 
 		bytes := []byte("message")
 		message := &mock.FakeMessage{
-			FakeUnmarshaled: func() map[string]interface{} {
-				return map[string]interface{}{}
-			},
 			FakeBytes: func() []byte {
 				return bytes
 			},
 		}
 
 		filterClause := &mock.FakeFilterClause{
-			FakeMatch: func(_ map[string]interface{}) bool {
-				return true
+			FakeMatch: func(_ domain.Message) (bool, error) {
+				return true, nil
 			},
 		}
 
@@ -237,17 +247,14 @@ func TestSend(t *testing.T) {
 
 		bytes := []byte("message")
 		message := &mock.FakeMessage{
-			FakeUnmarshaled: func() map[string]interface{} {
-				return map[string]interface{}{}
-			},
 			FakeBytes: func() []byte {
 				return bytes
 			},
 		}
 
 		filterClause := &mock.FakeFilterClause{
-			FakeMatch: func(_ map[string]interface{}) bool {
-				return true
+			FakeMatch: func(_ domain.Message) (bool, error) {
+				return true, nil
 			},
 		}
 

@@ -4,7 +4,279 @@ import (
 	"testing"
 
 	"github.com/notomo/wsxhub/internal/domain"
+	"github.com/notomo/wsxhub/internal/mock"
 )
+
+func TestMatch(t *testing.T) {
+	type S = map[string]interface{}
+
+	tests := []struct {
+		name         string
+		filterClause domain.FilterClause
+		targets      []map[string]interface{}
+		want         bool
+	}{
+		{
+			name:         "no filter",
+			filterClause: &FilterClauseImpl{},
+			targets: []S{
+				S{"id": "1"},
+			},
+			want: true,
+		},
+		{
+			name: "match all filters with all targets",
+			filterClause: &FilterClauseImpl{
+				OperatorType:      domain.OperatorTypeAnd,
+				BatchOperatorType: domain.OperatorTypeAnd,
+				Filters: []FilterImpl{
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"id": "1",
+						},
+					},
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"key1": "hoge",
+						},
+					},
+				},
+			},
+			targets: []S{
+				S{"id": "1", "key1": "hoge"},
+				S{"key1": "hoge", "id": "1", "key2": "foo"},
+			},
+			want: true,
+		},
+		{
+			name: "not match all filters with all targets",
+			filterClause: &FilterClauseImpl{
+				OperatorType:      domain.OperatorTypeAnd,
+				BatchOperatorType: domain.OperatorTypeAnd,
+				Filters: []FilterImpl{
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"id": "1",
+						},
+					},
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"key1": "hoge",
+						},
+					},
+				},
+			},
+			targets: []S{
+				S{"id": "1", "key1": "hoge"},
+				S{"key1": "hoge", "id": "2", "key2": "foo"},
+			},
+			want: false,
+		},
+		{
+			name: "match all filters with one target",
+			filterClause: &FilterClauseImpl{
+				OperatorType:      domain.OperatorTypeAnd,
+				BatchOperatorType: domain.OperatorTypeOr,
+				Filters: []FilterImpl{
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"id": "1",
+						},
+					},
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"key1": "hoge",
+						},
+					},
+				},
+			},
+			targets: []S{
+				S{"id": "1", "key1": "hoge", "key2": "foo"},
+				S{"id": "2", "key1": "hoge"},
+			},
+			want: true,
+		},
+		{
+			name: "not match all filters with one target",
+			filterClause: &FilterClauseImpl{
+				OperatorType:      domain.OperatorTypeAnd,
+				BatchOperatorType: domain.OperatorTypeOr,
+				Filters: []FilterImpl{
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"id": "1",
+						},
+					},
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"key1": "hoge",
+						},
+					},
+				},
+			},
+			targets: []S{
+				S{"id": "2", "key2": "foo"},
+				S{"id": "2"},
+			},
+			want: false,
+		},
+		{
+			name: "match one filter with all targets",
+			filterClause: &FilterClauseImpl{
+				OperatorType:      domain.OperatorTypeOr,
+				BatchOperatorType: domain.OperatorTypeAnd,
+				Filters: []FilterImpl{
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"id": "1",
+						},
+					},
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"key1": "hoge",
+						},
+					},
+				},
+			},
+			targets: []S{
+				S{"id": "1"},
+				S{"key1": "hoge"},
+			},
+			want: true,
+		},
+		{
+			name: "not match one filter with all targets",
+			filterClause: &FilterClauseImpl{
+				OperatorType:      domain.OperatorTypeOr,
+				BatchOperatorType: domain.OperatorTypeAnd,
+				Filters: []FilterImpl{
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"id": "2",
+						},
+					},
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"key1": "foo",
+						},
+					},
+				},
+			},
+			targets: []S{
+				S{"id": "1"},
+				S{"key1": "hoge"},
+			},
+			want: false,
+		},
+		{
+			name: "match one filter with one targets",
+			filterClause: &FilterClauseImpl{
+				OperatorType:      domain.OperatorTypeOr,
+				BatchOperatorType: domain.OperatorTypeOr,
+				Filters: []FilterImpl{
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"id": "2",
+						},
+					},
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"key1": "hoge",
+						},
+					},
+				},
+			},
+			targets: []S{
+				S{"id": "1"},
+				S{"key1": "hoge"},
+				S{"id": "3"},
+			},
+			want: true,
+		},
+		{
+			name: "not match one filter with one targets",
+			filterClause: &FilterClauseImpl{
+				OperatorType:      domain.OperatorTypeOr,
+				BatchOperatorType: domain.OperatorTypeOr,
+				Filters: []FilterImpl{
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"id": "2",
+						},
+					},
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"key1": "hoge",
+						},
+					},
+				},
+			},
+			targets: []S{
+				S{"id": "1"},
+				S{"key2": "hoge"},
+				S{"id": "3"},
+			},
+			want: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			message := &mock.FakeMessage{
+				FakeUnmarshaled: func() []map[string]interface{} {
+					return test.targets
+				},
+			}
+
+			got, err := test.filterClause.Match(message)
+			if err != nil {
+				t.Fatalf("should not be error: %v", err)
+			}
+
+			if got != test.want {
+				t.Errorf("want %v, but %v:", test.want, got)
+			}
+		})
+	}
+
+	t.Run("invalid operator", func(t *testing.T) {
+		message := &mock.FakeMessage{
+			FakeUnmarshaled: func() []map[string]interface{} {
+				return []S{}
+			},
+		}
+
+		filterClause := &FilterClauseImpl{
+			OperatorType: domain.OperatorType("invalid"),
+			Filters: []FilterImpl{
+				{
+					Map: S{},
+				},
+			},
+		}
+
+		if _, err := filterClause.Match(message); err == nil {
+			t.Fatalf("should be error")
+		}
+	})
+
+}
 
 func TestExactMatch(t *testing.T) {
 	type S = map[string]interface{}
@@ -72,7 +344,10 @@ func TestExactMatch(t *testing.T) {
 				Map:       test.filter,
 			}
 
-			got := f.Match(test.target)
+			got, err := f.Match(test.target)
+			if err != nil {
+				t.Fatalf("should not be error: %v", err)
+			}
 
 			if got != test.want {
 				t.Errorf("want %v, but %v:", test.want, got)
@@ -135,7 +410,10 @@ func TestExactKeyMatch(t *testing.T) {
 				Map:       test.filter,
 			}
 
-			got := f.Match(test.target)
+			got, err := f.Match(test.target)
+			if err != nil {
+				t.Fatalf("should not be error: %v", err)
+			}
 
 			if got != test.want {
 				t.Errorf("want %v, but %v:", test.want, got)
@@ -214,7 +492,10 @@ func TestRegexpMatch(t *testing.T) {
 				Map:       regexpMap,
 			}
 
-			got := f.Match(test.target)
+			got, err := f.Match(test.target)
+			if err != nil {
+				t.Fatalf("should not be error: %v", err)
+			}
 
 			if got != test.want {
 				t.Errorf("want %v, but %v:", test.want, got)
@@ -277,7 +558,10 @@ func TestContained(t *testing.T) {
 				Map:       test.filter,
 			}
 
-			got := f.Match(test.target)
+			got, err := f.Match(test.target)
+			if err != nil {
+				t.Fatalf("should not be error: %v", err)
+			}
 
 			if got != test.want {
 				t.Errorf("want %v, but %v:", test.want, got)
@@ -346,7 +630,10 @@ func TestContain(t *testing.T) {
 				Map:       test.filter,
 			}
 
-			got := f.Match(test.target)
+			got, err := f.Match(test.target)
+			if err != nil {
+				t.Fatalf("should not be error: %v", err)
+			}
 
 			if got != test.want {
 				t.Errorf("want %v, but %v:", test.want, got)
@@ -397,7 +684,10 @@ func TestContainedKey(t *testing.T) {
 				Map:       test.filter,
 			}
 
-			got := f.Match(test.target)
+			got, err := f.Match(test.target)
+			if err != nil {
+				t.Fatalf("should not be error: %v", err)
+			}
 
 			if got != test.want {
 				t.Errorf("want %v, but %v:", test.want, got)
@@ -448,11 +738,25 @@ func TestContainKey(t *testing.T) {
 				Map:       test.filter,
 			}
 
-			got := f.Match(test.target)
+			got, err := f.Match(test.target)
+			if err != nil {
+				t.Fatalf("should not be error: %v", err)
+			}
 
 			if got != test.want {
 				t.Errorf("want %v, but %v:", test.want, got)
 			}
 		})
 	}
+
+	t.Run("invalid match type", func(t *testing.T) {
+		f := FilterImpl{
+			MatchType: domain.MatchType("invalid"),
+			Map:       S{},
+		}
+
+		if _, err := f.Match(S{}); err == nil {
+			t.Fatalf("should be error")
+		}
+	})
 }
