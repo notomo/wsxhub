@@ -3,6 +3,7 @@ package command_test
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -45,11 +46,12 @@ func (server *testServer) start() {
 	started := make(chan bool)
 	go func() {
 		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			started <- true
-			started <- true
-			break
-		}
+		scanner.Scan()
+		fmt.Println(scanner.Text())
+		started <- true
+		scanner.Scan()
+		fmt.Println(scanner.Text())
+		started <- true
 	}()
 	<-started
 	<-started

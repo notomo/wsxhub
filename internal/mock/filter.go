@@ -7,10 +7,10 @@ import (
 // FakeFilterClause :
 type FakeFilterClause struct {
 	domain.FilterClause
-	FakeMatch func(domain.Message) bool
+	FakeMatch func(domain.Message) (bool, error)
 }
 
 // Match :
-func (filterClause *FakeFilterClause) Match(message domain.Message) bool {
+func (filterClause *FakeFilterClause) Match(message domain.Message) (bool, error) {
 	return filterClause.FakeMatch(message)
 }

@@ -48,7 +48,11 @@ func (conn *ConnectionImpl) Listen() error {
 
 // Send :
 func (conn *ConnectionImpl) Send(message domain.Message) (bool, error) {
-	if !conn.filterClause.Match(message) {
+	matched, err := conn.filterClause.Match(message)
+	if err != nil {
+		return false, err
+	}
+	if !matched {
 		return false, nil
 	}
 

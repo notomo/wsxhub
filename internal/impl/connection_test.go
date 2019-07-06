@@ -165,11 +165,11 @@ func TestSend(t *testing.T) {
 		message := &mock.FakeMessage{}
 
 		filterClause := &mock.FakeFilterClause{
-			FakeMatch: func(m domain.Message) bool {
+			FakeMatch: func(m domain.Message) (bool, error) {
 				if message != m {
 					t.Errorf("should be the same message, but actual: %v, %v", message, m)
 				}
-				return false
+				return false, nil
 			},
 		}
 
@@ -183,6 +183,24 @@ func TestSend(t *testing.T) {
 		}
 		if err != nil {
 			t.Errorf("should not be error, but actual: %v", err)
+		}
+	})
+
+	t.Run("filter error", func(t *testing.T) {
+		message := &mock.FakeMessage{}
+
+		filterClause := &mock.FakeFilterClause{
+			FakeMatch: func(m domain.Message) (bool, error) {
+				return false, fmt.Errorf("err")
+			},
+		}
+
+		connection := &ConnectionImpl{
+			filterClause: filterClause,
+		}
+
+		if _, err := connection.Send(message); err == nil {
+			t.Errorf("should be error")
 		}
 	})
 
@@ -201,8 +219,8 @@ func TestSend(t *testing.T) {
 		}
 
 		filterClause := &mock.FakeFilterClause{
-			FakeMatch: func(_ domain.Message) bool {
-				return true
+			FakeMatch: func(_ domain.Message) (bool, error) {
+				return true, nil
 			},
 		}
 
@@ -235,8 +253,8 @@ func TestSend(t *testing.T) {
 		}
 
 		filterClause := &mock.FakeFilterClause{
-			FakeMatch: func(_ domain.Message) bool {
-				return true
+			FakeMatch: func(_ domain.Message) (bool, error) {
+				return true, nil
 			},
 		}
 
