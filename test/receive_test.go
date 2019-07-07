@@ -9,14 +9,15 @@ import (
 )
 
 func TestReceive(t *testing.T) {
-	server.start()
-	defer server.stop()
-
 	cmdClient := newCommandClient(t, "receive")
+
+	cmdClient.startServer()
+	defer cmdClient.stopServer()
+
 	if err := cmdClient.cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
-	if err := server.waitToJoin(); err != nil {
+	if err := cmdClient.waitToJoinServer(); err != nil {
 		t.Fatal(err)
 	}
 

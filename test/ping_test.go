@@ -7,6 +7,7 @@ import (
 
 func TestPingFailure(t *testing.T) {
 	cmdClient := newCommandClient(t, "ping")
+
 	received := cmdClient.scanStderr()
 
 	if err := cmdClient.cmd.Run(); err == nil {
@@ -25,10 +26,11 @@ func TestPingFailure(t *testing.T) {
 }
 
 func TestPing(t *testing.T) {
-	server.start()
-	defer server.stop()
-
 	cmdClient := newCommandClient(t, "ping")
+
+	cmdClient.startServer()
+	defer cmdClient.stopServer()
+
 	received := cmdClient.scanStdout()
 	if err := cmdClient.cmd.Run(); err != nil {
 		t.Fatal(err)

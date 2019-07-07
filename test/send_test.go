@@ -9,10 +9,11 @@ import (
 )
 
 func TestSend(t *testing.T) {
-	server.start()
-	defer server.stop()
-
 	cmdClient := newCommandClient(t, "send")
+
+	cmdClient.startServer()
+	defer cmdClient.stopServer()
+
 	if err := cmdClient.cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -53,11 +54,12 @@ func TestSend(t *testing.T) {
 }
 
 func TestBatchSend(t *testing.T) {
-	server.start()
-	defer server.stop()
-
 	filter := `{"filters": [{"map": {"id": "1"}}, {"map": {"id": "2"}}]}`
 	cmdClient := newCommandClient(t, "send", "--filter", filter)
+
+	cmdClient.startServer()
+	defer cmdClient.stopServer()
+
 	if err := cmdClient.cmd.Start(); err != nil {
 		t.Fatal(err)
 	}

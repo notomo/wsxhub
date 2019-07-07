@@ -8,10 +8,11 @@ import (
 )
 
 func TestNotify(t *testing.T) {
-	server.start()
-	defer server.stop()
-
 	cmdClient := newCommandClient(t, "notify")
+
+	cmdClient.startServer()
+	defer cmdClient.stopServer()
+
 	if err := cmdClient.cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
