@@ -53,6 +53,20 @@ func main() {
 			},
 		},
 		{
+			Name:  "notify",
+			Usage: "Send a request, but don't wait response",
+			Action: func(context *cli.Context) error {
+				cmd := command.NotifyCommand{
+					WebsocketClientFactory: &impl.WebsocketClientFactoryImpl{
+						Port: context.GlobalString("port"),
+					},
+					MessageFactory: &impl.MessageFactoryImpl{},
+					InputReader:    os.Stdin,
+				}
+				return cmd.Run()
+			},
+		},
+		{
 			Name:  "receive",
 			Usage: "Wait receiving requests",
 			Action: func(context *cli.Context) error {
