@@ -25,6 +25,16 @@ func TestMatch(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "no filter with not",
+			filterClause: &FilterClauseImpl{
+				Not: true,
+			},
+			targets: []S{
+				S{"id": "1"},
+			},
+			want: false,
+		},
+		{
 			name: "match all filters with all targets",
 			filterClause: &FilterClauseImpl{
 				OperatorType:      domain.OperatorTypeAnd,
@@ -73,6 +83,33 @@ func TestMatch(t *testing.T) {
 			targets: []S{
 				S{"id": "1", "key1": "hoge"},
 				S{"key1": "hoge", "id": "2", "key2": "foo"},
+			},
+			want: false,
+		},
+		{
+			name: "match all filters with all targets with not",
+			filterClause: &FilterClauseImpl{
+				OperatorType:      domain.OperatorTypeAnd,
+				BatchOperatorType: domain.OperatorTypeAnd,
+				Not:               true,
+				Filters: []FilterImpl{
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"id": "1",
+						},
+					},
+					{
+						MatchType: domain.MatchTypeContained,
+						Map: S{
+							"key1": "hoge",
+						},
+					},
+				},
+			},
+			targets: []S{
+				S{"id": "1", "key1": "hoge"},
+				S{"key1": "hoge", "id": "1", "key2": "foo"},
 			},
 			want: false,
 		},

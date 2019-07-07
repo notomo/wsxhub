@@ -85,31 +85,45 @@ type FilterClauseImpl struct {
 	OperatorType      domain.OperatorType `json:"operator"`
 	BatchOperatorType domain.OperatorType `json:"batchOperator"`
 	Filters           []FilterImpl        `json:"filters"`
+	Not               bool                `json:"not"`
 }
 
 // Match :
 func (clause *FilterClauseImpl) Match(message domain.Message) (bool, error) {
 	if len(clause.Filters) == 0 {
-		return true, nil
+		return !clause.Not, nil
 	}
 	targetMaps := message.Unmarshaled()
+
+	var matched bool
+	var err error
 	switch clause.OperatorType {
 	case domain.OperatorTypeAnd:
 		switch clause.BatchOperatorType {
 		case domain.OperatorTypeAnd, domain.OperatorTypeDefault:
-			return clause.andMatchAll(targetMaps)
+			matched, err = clause.andMatchAll(targetMaps)
 		case domain.OperatorTypeOr:
-			return clause.andMatchOne(targetMaps)
+			matched, err = clause.andMatchOne(targetMaps)
+		default:
+			return false, errors.New("maybe batch operator type is not validated: " + string(clause.BatchOperatorType))
 		}
 	case domain.OperatorTypeOr, domain.OperatorTypeDefault:
 		switch clause.BatchOperatorType {
 		case domain.OperatorTypeAnd, domain.OperatorTypeDefault:
-			return clause.orMatchAll(targetMaps)
+			matched, err = clause.orMatchAll(targetMaps)
 		case domain.OperatorTypeOr:
-			return clause.orMatchOne(targetMaps)
+			matched, err = clause.orMatchOne(targetMaps)
+		default:
+			return false, errors.New("maybe batch operator type is not validated: " + string(clause.BatchOperatorType))
 		}
+	default:
+		return false, errors.New("maybe operator type is not validated: " + string(clause.OperatorType))
 	}
-	return false, errors.New("maybe operator type is not validated: " + string(clause.OperatorType))
+
+	if clause.Not {
+		return !matched, err
+	}
+	return matched, err
 }
 
 func (clause *FilterClauseImpl) andMatchAll(targetMaps []map[string]interface{}) (bool, error) {
