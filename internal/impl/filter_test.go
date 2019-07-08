@@ -1,11 +1,80 @@
 package impl
 
 import (
+	"reflect"
+	"regexp"
 	"testing"
 
 	"github.com/notomo/wsxhub/internal/domain"
 	"github.com/notomo/wsxhub/internal/mock"
 )
+
+func TestFilterClause(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   FilterClauseImpl
+	}{
+		{
+			name:   "empty",
+			source: "",
+			want:   FilterClauseImpl{},
+		},
+		{
+			name:   "simple",
+			source: `{"operator": "and", "batchOperator": "or", "not": true, "filters": [{"map": {}}]}`,
+			want: FilterClauseImpl{
+				OperatorType:      domain.OperatorTypeAnd,
+				BatchOperatorType: domain.OperatorTypeOr,
+				Not:               true,
+				Filters: []FilterImpl{
+					{
+						Map: map[string]interface{}{},
+					},
+				},
+			},
+		},
+		{
+			name:   "regexp",
+			source: `{"filters": [{"type": "regexp", "map": {"name": "^Hoge"}}]}`,
+			want: FilterClauseImpl{
+				Filters: []FilterImpl{
+					{
+						Map: map[string]interface{}{
+							"name": regexp.MustCompile("^Hoge"),
+						},
+						MatchType: domain.MatchTypeRegexp,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			factory := &FilterClauseFactoryImpl{}
+			filterClause, err := factory.FilterClause(test.source)
+			if err != nil {
+				t.Fatalf("should not be err: %v", err)
+			}
+
+			filterClauseImpl := filterClause.(*FilterClauseImpl)
+
+			if got, want := filterClauseImpl.OperatorType, test.want.OperatorType; got != want {
+				t.Errorf("OperatorType: want %v, but %v:", want, got)
+			}
+			if got, want := filterClauseImpl.BatchOperatorType, test.want.BatchOperatorType; got != want {
+				t.Errorf("BatchOperatorType: want %v, but %v:", want, got)
+			}
+			if got, want := filterClauseImpl.Not, test.want.Not; got != want {
+				t.Errorf("Not: want %v, but %v:", want, got)
+			}
+			if got, want := filterClauseImpl.Filters, test.want.Filters; !reflect.DeepEqual(got, want) {
+				t.Errorf("Filters length: want %v, but %v:", want, got)
+			}
+		})
+	}
+}
 
 func TestMatch(t *testing.T) {
 	type S = map[string]interface{}
