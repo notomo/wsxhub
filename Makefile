@@ -4,7 +4,7 @@ build:
 
 test:
 	$(MAKE) build
-	go test -v github.com/notomo/wsxhub/... -race -coverprofile=coverage.txt -covermode=atomic
+	GO111MODULE=on go test -v github.com/notomo/wsxhub/... -race -coverprofile=coverage.txt -covermode=atomic
 	$(MAKE) coverage
 
 coverage:
