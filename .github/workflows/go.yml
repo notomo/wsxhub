@@ -31,6 +31,14 @@ jobs:
     - name: Build and test
       run: make test
 
+    - name: Set up codecov
+      uses: actions/checkout@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: success() && matrix.os == 'ubuntu-latest'
+
     - name: Upload coverage
-      run: bash <(curl -s https://codecov.io/bash)
+      uses: codecov/codecov-action@v1.0.2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
       if: success() && matrix.os == 'ubuntu-latest'
