@@ -1,6 +1,11 @@
+ifeq ($(OS),Windows_NT)
+  DIST = dist/wsxhub.exe
+else
+  DIST = dist/wsxhub
+endif
 
 build:
-	GO111MODULE=on go build -o dist/wsxhub ./main.go
+	GO111MODULE=on go build -o $(DIST) ./main.go
 
 test:
 	$(MAKE) build
