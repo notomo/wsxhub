@@ -30,3 +30,7 @@ jobs:
 
     - name: Build and test
       run: make test
+
+    - name: Upload coverage
+      run: bash <(curl -s https://codecov.io/bash)
+      if: success() && matrix.os == 'ubuntu-latest'
